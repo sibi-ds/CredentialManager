@@ -5,40 +5,49 @@ and store user access details
 from django.db import models
 
 
-class Credential(models.Model):
-    credential_id = models.AutoField(primary_key=True)
-    access_level_id = models.IntegerField()
-    name = models.CharField(max_length=45)
-    description = models.TextField()
-
-
-class CredentialDetails(models.Model):
-    credential_details_id = models.AutoField(primary_key=True)
-    credential = models.ForeignKey(Credential, on_delete=models.CASCADE)
-    key = models.CharField(max_length=45)
-    value = models.CharField(max_length=45)
-
-
 class Project(models.Model):
     project_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     email_address = models.EmailField(max_length=45, unique=True)
+    description = models.TextField()
 
 
 class Employee(models.Model):
     employee_id = models.AutoField(primary_key=True)
-    project = models.ForeignKey(Project, default=1, on_delete=models.CASCADE)
     name = models.CharField(max_length=45)
     email_address = models.EmailField(max_length=45, unique=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
 
-class AccessibleUser(models.Model):
+class Vault(models.Model):
+    vault_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=45)
+    email_address = models.EmailField(max_length=45, unique=True)
+    password = models.CharField(max_length=45)
+    description = models.TextField()
+    project = models.OneToOneField(Project, on_delete=models.CASCADE)
+
+
+class Component(models.Model):
+    component_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=45)
+    description = models.TextField()
+    vault = models.ForeignKey(Vault, on_delete=models.CASCADE)
+
+
+class Item(models.Model):
+    item_id = models.AutoField(primary_key=True)
+    key = models.CharField(max_length=45)
+    value = models.CharField(max_length=45)
+    component = models.ForeignKey(Component, on_delete=models.CASCADE,
+                                  related_name='items')
+
+
+class UserAccess(models.Model):
     class Meta:
-        unique_together = (('credential', 'employee'),)
+        unique_together = (('component', 'employee'),)
 
-    credential = models.ForeignKey(Credential,
-                                   on_delete=models.CASCADE)
-    employee = models.ForeignKey(Employee,
-                                 to_field='email_address',
+    component = models.ForeignKey(Component, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Employee, to_field='email_address',
                                  db_column='email_address',
                                  on_delete=models.CASCADE)
