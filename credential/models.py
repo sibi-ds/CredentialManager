@@ -32,7 +32,8 @@ class Component(models.Model):
     component_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     description = models.TextField()
-    vault = models.ForeignKey(Vault, on_delete=models.CASCADE)
+    vault = models.ForeignKey(Vault, to_field='vault_id',
+                              on_delete=models.CASCADE)
 
 
 class Item(models.Model):
@@ -40,6 +41,7 @@ class Item(models.Model):
     key = models.CharField(max_length=45)
     value = models.CharField(max_length=45)
     component = models.ForeignKey(Component, on_delete=models.CASCADE,
+                                  to_field='component_id',
                                   related_name='items')
 
 
