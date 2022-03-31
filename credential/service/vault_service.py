@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from credential.models import Vault, Project, Employee
 from credential.serializer import VaultSerializer
-from credential.service import user_access_service
+from credential.service import user_access_service, employee_service
 
 
 def create_vault(project_id, data):
@@ -16,39 +16,25 @@ def get_vault(project_id, vault_id, data):
     try:
         email_address = data.get('email_address')
 
-        vault = Vault.objects.filter(vault_id=vault_id, project_id=project_id)
+        vault = Vault.objects.get(vault_id=vault_id, project_id=project_id)
 
-        if len(vault) > 0:
-            vault = vault[0]
+        vault_access = user_access_service.get_vault_access(vault_id,
+                                                            email_address)
 
-            if vault.email_address == email_address:
-                return vault
-            else:
-                vault_access = user_access_service \
-                    .get_vault_access(vault_id, email_address)
-
-                if vault_access is not None:
-                    return vault
-                elif vault.access_level == 'PROJECT':
-                    project = Project.objects.get(project_id=project_id)
-
-                    for employee in project.employees:
-                        if employee.email_address == email_address:
-                            return vault
-
-                    return None
-                elif vault.access_level == 'ORGANIZATION':
-                    employees = Employee.objects \
-                        .filter(email_address=email_address)
-
-                    if len(employees) > 0:
-                        return vault
-                    else:
-                        return None
+        if vault.email_address == email_address:
+            return vault
+        elif vault_access is not None:
+            return vault
+        elif vault.access_level == 'ORGANIZATION' \
+                and employee_service.is_organization_employee(email_address) \
+                is not None:
+            return vault
+        elif vault.access_level == 'PROJECT' \
+                and employee_service \
+                .is_project_employee(email_address,project_id) is not None:
+            return vault
         else:
             return None
-
-        return vault
     except ObjectDoesNotExist:
         return None
 

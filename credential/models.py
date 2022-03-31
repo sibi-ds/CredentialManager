@@ -17,7 +17,7 @@ class Employee(models.Model):
     name = models.CharField(max_length=45)
     email_address = models.EmailField(max_length=45, unique=True)
     projects = models.ManyToManyField(Project, related_name='employees',
-                                      null=True, blank=True)
+                                      blank=True)
 
 
 class Vault(models.Model):

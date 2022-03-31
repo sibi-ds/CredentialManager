@@ -12,7 +12,7 @@ from credential.models import Vault
 
 from credential.serializer import ComponentDeSerializer
 from credential.serializer import ComponentSerializer
-from credential.service import user_access_service
+from credential.service import user_access_service, employee_service
 
 
 def create_component(project_id, vault_id, data):
@@ -46,28 +46,25 @@ def get_component(project_id, vault_id, component_id, data):
             .get_vault_access(vault_id, email_address)
 
         if vault.email_address == email_address:
-            print('1')
             return component
         elif vault_access is not None \
                 and vault_access.email_address == email_address:
-            print('2')
             return component
         elif component_access is not None \
                 and component_access.email_adddress == email_address:
-            print('3')
             return component
-        elif vault.access_level == 'ORGANIZATION' \
-                or component.access_level == 'ORGANIZATION':
-            print('4')
+        elif (vault.access_level == 'ORGANIZATION'
+                or component.access_level == 'ORGANIZATION') \
+                and employee_service \
+                .is_organization_employee(email_address) is not None:
             return component
-        elif vault.access_level == 'PROJECT' \
-                or component.access_level == 'PROJECT':
-            employees = Employee.objects.filter(projects__project_id=project_id,
-                                                email_address=email_address)
-            if len(employees) > 0:
-                return component
-            else:
-                return None
+        elif (vault.access_level == 'PROJECT'
+                or component.access_level == 'PROJECT') \
+                and employee_service \
+                .is_project_employee(email_address, project_id) is not None:
+            return component
+        else:
+            return None
     except ObjectDoesNotExist:
         return None
 

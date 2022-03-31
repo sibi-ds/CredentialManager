@@ -6,15 +6,13 @@ from django.http import HttpRequest
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from credential.serializer import VaultSerializer, ProjectSerializer, \
-    VaultAccessSerializer, EmployeeSerializer
+from credential.serializer import VaultSerializer
+from credential.serializer import VaultAccessSerializer
+from credential.serializer import EmployeeSerializer
 from credential.serializer import ComponentSerializer
 from credential.serializer import ComponentAccessSerializer
 
-from credential.models import Vault, Employee
-from credential.models import Project
-from credential.models import Component
-from credential.models import ComponentAccess
+from credential.models import Employee
 
 from credential.service import component_service
 from credential.service import user_access_service
