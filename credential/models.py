@@ -16,7 +16,8 @@ class Employee(models.Model):
     employee_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     email_address = models.EmailField(max_length=45, unique=True)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    projects = models.ManyToManyField(Project, related_name='employees',
+                                      null=True, blank=True)
 
 
 class Vault(models.Model):
@@ -25,6 +26,7 @@ class Vault(models.Model):
     email_address = models.EmailField(max_length=45, unique=True)
     password = models.CharField(max_length=45)
     description = models.TextField()
+    access_level = models.CharField(max_length=45)
     project = models.OneToOneField(Project, on_delete=models.CASCADE)
 
 
@@ -32,8 +34,10 @@ class Component(models.Model):
     component_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     description = models.TextField()
+    access_level = models.CharField(max_length=45)
     vault = models.ForeignKey(Vault, to_field='vault_id',
-                              on_delete=models.CASCADE)
+                              on_delete=models.CASCADE,
+                              related_name='components')
 
 
 class Item(models.Model):
@@ -45,7 +49,17 @@ class Item(models.Model):
                                   related_name='items')
 
 
-class UserAccess(models.Model):
+class VaultAccess(models.Model):
+    class Meta:
+        unique_together = (('vault', 'employee'),)
+
+    vault = models.ForeignKey(Vault, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Employee, to_field='email_address',
+                                 db_column='email_address',
+                                 on_delete=models.CASCADE)
+
+
+class ComponentAccess(models.Model):
     class Meta:
         unique_together = (('component', 'employee'),)
 

@@ -5,12 +5,14 @@ from django.db import transaction
 
 from rest_framework.response import Response
 
-from credential.models import Component, Item
-from credential.models import UserAccess
+from credential.models import Component, Employee
+from credential.models import ComponentAccess
+from credential.models import Item
 from credential.models import Vault
 
 from credential.serializer import ComponentDeSerializer
 from credential.serializer import ComponentSerializer
+from credential.service import user_access_service
 
 
 def create_component(project_id, vault_id, data):
@@ -18,38 +20,56 @@ def create_component(project_id, vault_id, data):
         data['vault'] = vault_id
         serializer = ComponentDeSerializer(data=data)
 
-        print(serializer)
-        serializer.is_valid()
-        print(serializer.validate_empty_values(data=data))
-        print(serializer.errors)
-
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
 
-        return Response('Enter valid details')
+        return None
     except Exception as ex:
         print(ex)
-        return Response('Try after sometime')
+        return None
 
 
 def get_component(project_id, vault_id, component_id, data):
     try:
         email_address = data.get('email_address')
+
         vault = Vault.objects.get(vault_id=vault_id)
 
         component = Component.objects.get(vault_id=vault_id,
                                           component_id=component_id)
 
+        component_access = user_access_service \
+            .get_component_access(component_id, email_address)
+
+        vault_access = user_access_service \
+            .get_vault_access(vault_id, email_address)
+
         if vault.email_address == email_address:
-            return serialize(component)
-
-        user_access = UserAccess.objects.get(component_id=component_id,
-                                             employee_id=email_address)
-
-        return serialize(component)
+            print('1')
+            return component
+        elif vault_access is not None \
+                and vault_access.email_address == email_address:
+            print('2')
+            return component
+        elif component_access is not None \
+                and component_access.email_adddress == email_address:
+            print('3')
+            return component
+        elif vault.access_level == 'ORGANIZATION' \
+                or component.access_level == 'ORGANIZATION':
+            print('4')
+            return component
+        elif vault.access_level == 'PROJECT' \
+                or component.access_level == 'PROJECT':
+            employees = Employee.objects.filter(projects__project_id=project_id,
+                                                email_address=email_address)
+            if len(employees) > 0:
+                return component
+            else:
+                return None
     except ObjectDoesNotExist:
-        return Response('You don\'t have access for this')
+        return None
 
 
 def update_component(project_id, vault_id, component_id, data):
@@ -59,7 +79,7 @@ def update_component(project_id, vault_id, component_id, data):
     if serializer.is_valid():
         component = serializer.save()
 
-    return serialize(component)
+    return component
 
 
 def serialize(data):

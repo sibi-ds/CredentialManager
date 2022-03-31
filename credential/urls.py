@@ -11,6 +11,9 @@ urlpatterns = [
          views.create_component, name='create_component'),
     path('<int:project_id>/vaults/<int:vault_id>/components/<int:component_id>',
          views.do_component, name='do_component'),
+    path('<int:project_id>/vaults/<int:vault_id>/accesses', views.do_vault_access,
+         name='do_vault_access'),
     path('<int:project_id>/vaults/<int:vault_id>/components/<int:component_id>/accesses',
-         views.do_access, name='do_access'),
+         views.do_component_access, name='do_component_access'),
+    path('<int:project_id>', views.get, name='get'),
 ]

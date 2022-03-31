@@ -1,13 +1,24 @@
 from rest_framework import serializers
-from credential.models import Vault
-from credential.models import Component
+
+from credential.models import Component, Project, Employee
+from credential.models import ComponentAccess
 from credential.models import Item
-from credential.models import UserAccess
+from credential.models import Vault
+from credential.models import VaultAccess
 
 
-class VaultSerializer(serializers.ModelSerializer):
+class EmployeeSerializer(serializers.ModelSerializer):
+
     class Meta:
-        model = Vault
+        model = Employee
+        fields = ('employee_id', 'name', 'email_address')
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+    employees = EmployeeSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Project
         fields = '__all__'
 
 
@@ -22,7 +33,16 @@ class ComponentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Component
-        fields = ('component_id', 'name', 'description', 'vault_id', 'items')
+        fields = ('component_id', 'name', 'description', 'vault_id',
+                  'access_level', 'items')
+
+
+class VaultSerializer(serializers.ModelSerializer):
+    components = ComponentSerializer(many=True)
+
+    class Meta:
+        model = Vault
+        exclude = ('email_address', 'password')
 
 
 class ComponentDeSerializer(serializers.ModelSerializer):
@@ -30,7 +50,7 @@ class ComponentDeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Component
-        fields = ('name', 'description', 'vault', 'items')
+        fields = ('name', 'description', 'access_level', 'vault', 'items')
 
     def create(self, validated_data):
         items = validated_data.pop('items')
@@ -65,7 +85,13 @@ class ComponentDeSerializer(serializers.ModelSerializer):
     #     return instance
 
 
-class UserAccessSerializer(serializers.ModelSerializer):
+class VaultAccessSerializer(serializers.ModelSerializer):
     class Meta:
-        model = UserAccess
+        model = VaultAccess
+        fields = '__all__'
+
+
+class ComponentAccessSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ComponentAccess
         fields = '__all__'
