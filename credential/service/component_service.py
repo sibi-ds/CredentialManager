@@ -1,33 +1,31 @@
 from django.core.exceptions import ObjectDoesNotExist
+from rest_framework.exceptions import ValidationError
 
-from django.db import DatabaseError
-from django.db import transaction
-
-from rest_framework.response import Response
-
-from credential.models import Component, Employee
-from credential.models import ComponentAccess
-from credential.models import Item
+from credential.models import Component
 from credential.models import Vault
 
 from credential.serializer import ComponentDeSerializer
 from credential.serializer import ComponentSerializer
-from credential.service import user_access_service, employee_service
+
+from credential.service import employee_service
+from credential.service import user_access_service
+
+from rest_framework.response import Response
+
+from credential.utils.api_exceptions import CustomApiException
 
 
 def create_component(project_id, vault_id, data):
     try:
         data['vault'] = vault_id
-        serializer = ComponentDeSerializer(data=data)
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+        component_serializer = ComponentDeSerializer(data=data)
+        component_serializer.is_valid(raise_exception=True)
+        component_serializer.save()
 
-        return None
-    except Exception as ex:
-        print(ex)
-        return None
+        return component_serializer.data
+    except ValidationError:
+        raise CustomApiException(500, 'Enter valid details')
 
 
 def get_component(project_id, vault_id, component_id, data):
@@ -66,7 +64,7 @@ def get_component(project_id, vault_id, component_id, data):
         else:
             return None
     except ObjectDoesNotExist:
-        return None
+        raise CustomApiException(400, 'No such component exist')
 
 
 def update_component(project_id, vault_id, component_id, data):

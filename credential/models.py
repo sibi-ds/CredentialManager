@@ -23,11 +23,12 @@ class Employee(models.Model):
 class Vault(models.Model):
     vault_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
-    email_address = models.EmailField(max_length=45, unique=True)
+    email_address = models.EmailField(max_length=45)
     password = models.CharField(max_length=45)
     description = models.TextField()
     access_level = models.CharField(max_length=45)
-    project = models.OneToOneField(Project, on_delete=models.CASCADE)
+    project = models.OneToOneField(Project, on_delete=models.CASCADE,
+                                   to_field='project_id')
 
 
 class Component(models.Model):

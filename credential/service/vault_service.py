@@ -1,15 +1,26 @@
 from django.core.exceptions import ObjectDoesNotExist
-from rest_framework.response import Response
-from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
-from credential.models import Vault, Project, Employee
+from credential.models import Vault
 from credential.serializer import VaultSerializer
-from credential.service import user_access_service, employee_service
+
+from credential.service import user_access_service
+from credential.service import employee_service
+
+from credential.utils.api_exceptions import CustomApiException
 
 
 def create_vault(project_id, data):
-    vault = Vault.objects.create(**data, project_id=project_id)
-    return vault
+    try:
+        data['project'] = project_id
+
+        vault_serializer = VaultSerializer(data=data)
+        vault_serializer.is_valid(raise_exception=True)
+        vault_serializer.save()
+
+        return vault_serializer.data
+    except ValidationError:
+        raise CustomApiException(500, 'Enter valid details')
 
 
 def get_vault(project_id, vault_id, data):
@@ -31,20 +42,15 @@ def get_vault(project_id, vault_id, data):
             return vault
         elif vault.access_level == 'PROJECT' \
                 and employee_service \
-                .is_project_employee(email_address,project_id) is not None:
+                .is_project_employee(email_address, project_id) is not None:
             return vault
         else:
             return None
     except ObjectDoesNotExist:
-        return None
+        raise CustomApiException(500, 'No such vault exist')
 
 
 def update_vault(project_id, vault_id, data):
     vault = Vault(**data, project_id=project_id)
     vault.save()
     return vault
-
-
-def serialize(data):
-    serializer = VaultSerializer(data)
-    return Response(serializer.data)

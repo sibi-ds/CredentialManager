@@ -45,6 +45,14 @@ class VaultSerializer(serializers.ModelSerializer):
         exclude = ('email_address', 'password')
 
 
+class VaultDeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Vault
+        fields = ('vault_id', 'name', 'email_address', 'password',
+                  'description', 'access_level', 'project')
+
+
 class ComponentDeSerializer(serializers.ModelSerializer):
     items = ItemSerializer(many=True)
 
