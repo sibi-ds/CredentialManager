@@ -7,6 +7,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from credential.serializer import VaultDeSerializer
+from credential.serializer import VaultSerializer
 from credential.serializer import EmployeeSerializer
 from credential.serializer import ComponentSerializer
 
@@ -39,8 +40,7 @@ def do_vault(request: HttpRequest, project_id, vault_id):
 
     if request.method == 'PUT':
         vault = vault_service.update_vault(project_id, vault_id, request.data)
-        serializer = VaultSerializer(vault)
-        return Response(serializer.data)
+        return Response(vault)
 
 
 @api_view(['POST'])

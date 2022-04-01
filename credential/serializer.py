@@ -46,11 +46,24 @@ class VaultSerializer(serializers.ModelSerializer):
 
 
 class VaultDeSerializer(serializers.ModelSerializer):
+    components = ComponentSerializer(many=True, read_only=True)
+    email_address = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True)
 
     class Meta:
         model = Vault
-        fields = ('vault_id', 'name', 'email_address', 'password',
-                  'description', 'access_level', 'project')
+        fields = ('vault_id', 'name', 'description', 'access_level',
+                  'project', 'email_address', 'password', 'components', )
+
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.description = validated_data.get('description',
+                                                  instance.description)
+        instance.access_level = validated_data.get('access_level',
+                                                   instance.access_level)
+        instance.project = validated_data.get('project', instance.project)
+
+        return instance
 
 
 class ComponentDeSerializer(serializers.ModelSerializer):
