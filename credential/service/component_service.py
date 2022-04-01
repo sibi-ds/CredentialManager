@@ -4,7 +4,6 @@ from rest_framework.exceptions import ValidationError
 from credential.models import Component
 from credential.models import Vault
 
-from credential.serializer import ComponentDeSerializer
 from credential.serializer import ComponentSerializer
 
 from credential.service import employee_service
@@ -19,8 +18,10 @@ def create_component(project_id, vault_id, data):
     try:
         data['vault'] = vault_id
 
-        component_serializer = ComponentDeSerializer(data=data)
-        component_serializer.is_valid(raise_exception=True)
+        component_serializer = ComponentSerializer(data=data)
+        component_serializer.is_valid(raise_exception=False)
+        print(component_serializer.errors)
+        print(component_serializer)
         component_serializer.save()
 
         return component_serializer.data

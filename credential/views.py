@@ -6,8 +6,7 @@ from django.http import HttpRequest
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from credential.serializer import VaultDeSerializer
-from credential.serializer import VaultSerializer
+from credential.serializer import VaultSerializer, ComponentSerializer
 from credential.serializer import EmployeeSerializer
 from credential.serializer import ComponentSerializer
 
@@ -35,7 +34,7 @@ def do_vault(request: HttpRequest, project_id, vault_id):
                                      'You don\' have access for this vault.'
                                      'Please check your credentials')
 
-        serializer = VaultDeSerializer(vault)
+        serializer = VaultSerializer(vault)
         return Response(serializer.data)
 
     if request.method == 'PUT':

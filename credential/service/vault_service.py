@@ -3,7 +3,6 @@ from rest_framework.exceptions import ValidationError
 
 from credential.models import Vault
 from credential.serializer import VaultSerializer
-from credential.serializer import VaultDeSerializer
 
 from credential.service import user_access_service
 from credential.service import employee_service
@@ -15,7 +14,7 @@ def create_vault(project_id, data):
     try:
         data['project'] = project_id
 
-        vault_serializer = VaultDeSerializer(data=data)
+        vault_serializer = VaultSerializer(data=data)
         vault_serializer.is_valid(raise_exception=False)
         print(vault_serializer.errors)
         vault_serializer.save()
@@ -56,7 +55,7 @@ def update_vault(project_id, vault_id, data):
     try:
         vault = Vault.objects.get(vault_id=vault_id)
 
-        vault_serializer = VaultDeSerializer(vault, data=data, partial=True)
+        vault_serializer = VaultSerializer(vault, data=data, partial=True)
         vault_serializer.is_valid(raise_exception=True)
         vault_serializer.save()
 
