@@ -68,8 +68,7 @@ def do_component(request: HttpRequest, project_id, vault_id, component_id):
         component = component_service.update_component(project_id, vault_id,
                                                        component_id,
                                                        request.data)
-        serializer = ComponentSerializer(component)
-        return Response(serializer.data)
+        return Response(component)
 
 
 @api_view(['POST', 'PUT', 'DELETE'])

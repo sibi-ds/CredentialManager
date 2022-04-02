@@ -15,7 +15,7 @@ def create_vault(project_id, data):
         data['project'] = project_id
 
         vault_serializer = VaultSerializer(data=data)
-        vault_serializer.is_valid(raise_exception=False)
+        vault_serializer.is_valid(raise_exception=True)
         print(vault_serializer.errors)
         vault_serializer.save()
 

@@ -1,8 +1,10 @@
 from rest_framework import serializers
 
-from credential.models import Component, Project, Employee
+from credential.models import Component
 from credential.models import ComponentAccess
+from credential.models import Employee
 from credential.models import Item
+from credential.models import Project
 from credential.models import Vault
 from credential.models import VaultAccess
 
@@ -23,27 +25,12 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class ItemSerializer(serializers.ModelSerializer):
+    item_id = serializers.IntegerField(required=False)
+
     class Meta:
         model = Item
         fields = ('item_id', 'key', 'value', 'component')
         read_only_fields = ('component', )
-
-
-# class ComponentSerializer(serializers.ModelSerializer):
-#     items = ItemSerializer(many=True)
-#
-#     class Meta:
-#         model = Component
-#         fields = ('component_id', 'name', 'description', 'vault_id',
-#                   'access_level', 'items')
-
-
-# class VaultSerializer(serializers.ModelSerializer):
-#     components = ComponentSerializer(many=True)
-#
-#     class Meta:
-#         model = Vault
-#         exclude = ('email_address', 'password')
 
 
 class ComponentSerializer(serializers.ModelSerializer):
@@ -65,21 +52,23 @@ class ComponentSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
-        instance.description = validated_data \
-            .get('description', instance.description)
+        instance.access_level = validated_data.get('access_level',
+                                                   instance.access_level)
+        instance.description = validated_data.get('description',
+                                                  instance.description)
 
         instance.save()
 
-        items = validated_data.get('items')
+        items = validated_data.pop('items')
 
         for item in items:
             item_id = item.get('item_id', None)
 
             if item_id:
-                component_item = Item.objects \
-                    .get(item_id=item_id, component=instance)
-                component_item.key = item.get('key', item.key)
-                component_item.value = item.get('value', item.value)
+                component_item = Item.objects.get(item_id=item_id,
+                                                  component=instance)
+                component_item.key = item.get('key', component_item.key)
+                component_item.value = item.get('value', component_item.value)
                 component_item.save()
             else:
                 Item.objects.create(component=instance, **item)

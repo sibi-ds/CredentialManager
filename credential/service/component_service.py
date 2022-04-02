@@ -19,7 +19,7 @@ def create_component(project_id, vault_id, data):
         data['vault'] = vault_id
 
         component_serializer = ComponentSerializer(data=data)
-        component_serializer.is_valid(raise_exception=False)
+        component_serializer.is_valid(raise_exception=True)
         print(component_serializer.errors)
         print(component_serializer)
         component_serializer.save()
@@ -69,13 +69,16 @@ def get_component(project_id, vault_id, component_id, data):
 
 
 def update_component(project_id, vault_id, component_id, data):
-    component = Component.objects.get(component_id=component_id)
-    serializer = ComponentDeSerializer(instance=component, data=data)
+    try:
+        component = Component.objects.get(component_id=component_id)
+        component_serializer = ComponentSerializer(instance=component, data=data)
 
-    if serializer.is_valid():
-        component = serializer.save()
+        component_serializer.is_valid(raise_exception=True)
+        component_serializer.save()
 
-    return component
+        return component_serializer.data
+    except ValidationError:
+        raise CustomApiException(500, 'Enter valid details')
 
 
 def serialize(data):
