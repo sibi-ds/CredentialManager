@@ -1,3 +1,5 @@
+"""This module contains serializers for all the models
+"""
 from rest_framework import serializers
 
 from credential.models import Component

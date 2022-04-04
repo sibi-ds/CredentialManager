@@ -1,3 +1,6 @@
+"""This module is used to create, update and delete
+vault for the project
+"""
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.exceptions import ValidationError
 

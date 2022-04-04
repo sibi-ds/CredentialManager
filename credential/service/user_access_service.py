@@ -1,10 +1,12 @@
+"""This module is used to achieve vault and component
+accesses for the employees in an organization
+"""
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.exceptions import ValidationError
 
 from rest_framework.response import Response
 
 from credential.models import ComponentAccess
-from credential.models import Employee
 from credential.models import VaultAccess
 
 from credential.serializer import ComponentAccessSerializer
@@ -39,7 +41,16 @@ def create_vault_access(project_id, vault_id, data):
 
 
 def remove_vault_access(project_id, vault_id, data):
-    pass
+    employee_email_address = data.get('email_address')
+
+    user_access = VaultAccess.objects.get(
+        employee_id=employee_email_address,
+        vault_id=vault_id
+    )
+
+    user_access.delete()
+
+    return Response('The access for ' + employee_email_address + 'is removed')
 
 
 def get_vault_access(vault_id, email_address):
@@ -76,11 +87,14 @@ def create_component_access(project_id, vault_id, component_id, data):
 
 def remove_component_access(project_id, vault_id, component_id, data):
     employee_email_address = data.get('email_address')
+
     user_access = ComponentAccess.objects.get(
         employee_id=employee_email_address,
         component_id=component_id
     )
+
     user_access.delete()
+
     return Response('The access for ' + employee_email_address + 'is removed')
 
 

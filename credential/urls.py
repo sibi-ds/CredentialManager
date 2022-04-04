@@ -9,11 +9,13 @@ urlpatterns = [
          name='do_vault'),
     path('<int:project_id>/vaults/<int:vault_id>/components',
          views.create_component, name='create_component'),
-    path('<int:project_id>/vaults/<int:vault_id>/components/<int:component_id>',
+    path('<int:project_id>/vaults/<int:vault_id>/components'
+         '/<int:component_id>',
          views.do_component, name='do_component'),
-    path('<int:project_id>/vaults/<int:vault_id>/accesses', views.do_vault_access,
-         name='do_vault_access'),
-    path('<int:project_id>/vaults/<int:vault_id>/components/<int:component_id>/accesses',
+    path('<int:project_id>/vaults/<int:vault_id>/accesses',
+         views.do_vault_access, name='do_vault_access'),
+    path('<int:project_id>/vaults/<int:vault_id>/components'
+         '/<int:component_id>/accesses',
          views.do_component_access, name='do_component_access'),
-    path('<int:project_id>', views.get, name='get'),
+    path('', views.get, name='get'),
 ]

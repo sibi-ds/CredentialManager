@@ -1,6 +1,4 @@
-"""This module contains classes
-which are used to store credentials
-and store user access details
+"""This module contains all model classes
 """
 from django.db import models
 
