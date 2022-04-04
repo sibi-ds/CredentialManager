@@ -31,7 +31,9 @@ class ItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Item
-        fields = ('item_id', 'key', 'value', 'component')
+        fields = ('item_id', 'key', 'active',
+                  'created_at', 'created_by', 'updated_at', 'updated_by',
+                  'value', 'component')
         read_only_fields = ('component', )
 
 
@@ -41,7 +43,8 @@ class ComponentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Component
         fields = ('component_id', 'name', 'description', 'access_level',
-                  'vault', 'items')
+                  'active', 'created_at', 'created_by', 'updated_at',
+                  'updated_by', 'vault', 'items')
 
     def create(self, validated_data):
         items = validated_data.pop('items')
@@ -54,6 +57,7 @@ class ComponentSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
+        instance.active = validated_data.get('active', instance.active)
         instance.access_level = validated_data.get('access_level',
                                                    instance.access_level)
         instance.description = validated_data.get('description',
@@ -85,8 +89,9 @@ class VaultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vault
-        fields = ('vault_id', 'name', 'description', 'access_level',
-                  'project', 'email_address', 'password', 'components', )
+        fields = ('vault_id', 'name', 'description', 'access_level', 'active',
+                  'created_at', 'created_by', 'updated_at', 'updated_by',
+                  'project', 'email_address', 'password', 'components')
 
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
@@ -95,7 +100,8 @@ class VaultSerializer(serializers.ModelSerializer):
         instance.access_level = validated_data.get('access_level',
                                                    instance.access_level)
         instance.project = validated_data.get('project', instance.project)
-
+        instance.active = validated_data.get('active', instance.active)
+        instance.save()
         return instance
 
 
@@ -104,8 +110,18 @@ class VaultAccessSerializer(serializers.ModelSerializer):
         model = VaultAccess
         fields = '__all__'
 
+    def update(self, instance, validated_data):
+        instance.active = validated_data.get('active', instance.active)
+        instance.save()
+        return instance
+
 
 class ComponentAccessSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComponentAccess
         fields = '__all__'
+
+    def update(self, instance, validated_data):
+        instance.active = validated_data.get('active', instance.active)
+        instance.save()
+        return instance

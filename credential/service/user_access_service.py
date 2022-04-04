@@ -41,22 +41,33 @@ def create_vault_access(project_id, vault_id, data):
 
 
 def remove_vault_access(project_id, vault_id, data):
-    employee_email_address = data.get('email_address')
+    try:
+        employee_email_address = data.pop('email_address')
 
-    user_access = VaultAccess.objects.get(
-        employee_id=employee_email_address,
-        vault_id=vault_id
-    )
+        vault_access = VaultAccess.objects.get(
+            employee=employee_email_address,
+            vault=vault_id
+        )
 
-    user_access.delete()
+        vault_access_serializer = VaultAccessSerializer(vault_access,
+                                                        data=data,
+                                                        partial=True)
+        vault_access_serializer.is_valid(raise_exception=True)
+        vault_access_serializer.save()
 
-    return Response('The access for ' + employee_email_address + 'is removed')
+        return Response('The access for ' + employee_email_address
+                        + ' is removed')
+    except ObjectDoesNotExist:
+        return Response('No such vault access exist')
+    except ValidationError:
+        return CustomApiException(500, 'Enter valid details')
 
 
 def get_vault_access(vault_id, email_address):
     try:
-        vault_access = VaultAccess.objects.get(vault_id=vault_id,
-                                               employee_id=email_address)
+        vault_access = VaultAccess.objects.get(vault=vault_id,
+                                               employee=email_address,
+                                               active=True)
         return vault_access
     except ObjectDoesNotExist:
         return None
@@ -86,27 +97,34 @@ def create_component_access(project_id, vault_id, component_id, data):
 
 
 def remove_component_access(project_id, vault_id, component_id, data):
-    employee_email_address = data.get('email_address')
+    try:
+        employee_email_address = data.get('email_address')
 
-    user_access = ComponentAccess.objects.get(
-        employee_id=employee_email_address,
-        component_id=component_id
-    )
+        component_access = ComponentAccess.objects.get(
+            employee=employee_email_address,
+            component=component_id
+        )
 
-    user_access.delete()
+        component_access_serializer = ComponentAccessSerializer(
+            component_access, data=data, partial=True
+        )
 
-    return Response('The access for ' + employee_email_address + 'is removed')
+        component_access_serializer.is_valid(raise_exception=False)
+        component_access_serializer.save()
+
+        return Response('The access for ' + employee_email_address
+                        + ' is removed')
+    except ObjectDoesNotExist:
+        return Response('No such component access exist')
+    except ValidationError:
+        raise CustomApiException(500, 'Enter valid details')
 
 
 def get_component_access(component_id, email_address):
     try:
         component = ComponentAccess.objects.get(component_id=component_id,
-                                                employee_id=email_address)
+                                                employee=email_address,
+                                                active=True)
         return component
     except ObjectDoesNotExist:
         return None
-
-
-def serialize(data):
-    serializer = ComponentAccessSerializer(data)
-    return Response(serializer.data)

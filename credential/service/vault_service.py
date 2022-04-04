@@ -18,7 +18,7 @@ def create_vault(project_id, data):
         data['project'] = project_id
 
         vault_serializer = VaultSerializer(data=data)
-        vault_serializer.is_valid(raise_exception=True)
+        vault_serializer.is_valid(raise_exception=False)
         print(vault_serializer.errors)
         vault_serializer.save()
 
@@ -31,7 +31,8 @@ def get_vault(project_id, vault_id, data):
     try:
         email_address = data.get('email_address')
 
-        vault = Vault.objects.get(vault_id=vault_id, project_id=project_id)
+        vault = Vault.objects.get(vault_id=vault_id, project_id=project_id,
+                                  active=True)
 
         vault_access = user_access_service.get_vault_access(vault_id,
                                                             email_address)
@@ -62,6 +63,9 @@ def update_vault(project_id, vault_id, data):
         vault_serializer.is_valid(raise_exception=True)
         vault_serializer.save()
 
-        return vault_serializer.data
+        vault = vault_serializer.data
+        vault.pop('components')
+
+        return vault
     except ValidationError:
         raise CustomApiException(500, 'Enter valid details')

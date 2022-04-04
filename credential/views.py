@@ -6,7 +6,8 @@ from django.http import HttpRequest
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from credential.serializer import VaultSerializer
+from credential.models import Project
+from credential.serializer import VaultSerializer, ProjectSerializer
 from credential.serializer import ComponentSerializer
 
 from credential.service import component_service
@@ -22,7 +23,7 @@ def create_vault(request: HttpRequest, project_id):
     return Response(vault)
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
+@api_view(['GET', 'PUT', 'PATCH'])
 def do_vault(request: HttpRequest, project_id, vault_id):
     if request.method == 'GET':
         vault = vault_service.get_vault(project_id, vault_id, request.data)
@@ -47,7 +48,7 @@ def create_component(request: HttpRequest, project_id, vault_id):
     return Response(component)
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
+@api_view(['GET', 'PUT', 'PATCH'])
 def do_component(request: HttpRequest, project_id, vault_id, component_id):
     if request.method == 'GET':
         component = component_service.get_component(project_id, vault_id,
@@ -59,7 +60,6 @@ def do_component(request: HttpRequest, project_id, vault_id, component_id):
                                           'Please check your credentials')
 
         serializer = ComponentSerializer(component)
-
         return Response(serializer.data)
 
     if request.method == 'PUT':
@@ -69,7 +69,7 @@ def do_component(request: HttpRequest, project_id, vault_id, component_id):
         return Response(component)
 
 
-@api_view(['POST', 'PUT', 'DELETE'])
+@api_view(['POST', 'PUT', 'PATCH'])
 def do_vault_access(request: HttpRequest, project_id, vault_id):
     if request.method == 'POST':
         vault_access = user_access_service.create_vault_access(project_id,
@@ -77,12 +77,12 @@ def do_vault_access(request: HttpRequest, project_id, vault_id):
                                                                request.data)
         return Response(vault_access)
 
-    if request.method == 'DELETE':
+    if request.method == 'PATCH':
         return user_access_service.remove_vault_access(project_id, vault_id,
                                                        request.data)
 
 
-@api_view(['POST', 'PUT', 'DELETE'])
+@api_view(['POST', 'PUT', 'PATCH'])
 def do_component_access(request: HttpRequest, project_id, vault_id,
                         component_id):
     if request.method == 'POST':
@@ -90,7 +90,7 @@ def do_component_access(request: HttpRequest, project_id, vault_id,
             project_id, vault_id, component_id, request.data)
         return Response(component_access)
 
-    if request.method == 'DELETE':
+    if request.method == 'PATCH':
         return user_access_service.remove_component_access(project_id,
                                                            vault_id,
                                                            component_id,
@@ -99,4 +99,5 @@ def do_component_access(request: HttpRequest, project_id, vault_id,
 
 @api_view(['POST'])
 def get(request):
-    return Response('Working')
+    project = Project.objects.get(project_id=request.data.get('project_id'))
+    return Response(ProjectSerializer(project).data)

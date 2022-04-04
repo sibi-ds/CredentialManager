@@ -39,7 +39,8 @@ def get_component(project_id, vault_id, component_id, data):
         vault = Vault.objects.get(vault_id=vault_id)
 
         component = Component.objects.get(vault_id=vault_id,
-                                          component_id=component_id)
+                                          component_id=component_id,
+                                          active=True)
 
         component_access = user_access_service \
             .get_component_access(component_id, email_address)
@@ -50,10 +51,10 @@ def get_component(project_id, vault_id, component_id, data):
         if vault.email_address == email_address:
             return component
         elif vault_access is not None \
-                and vault_access.email_address == email_address:
+                and vault_access.employee == email_address:
             return component
         elif component_access is not None \
-                and component_access.email_adddress == email_address:
+                and component_access.employee == email_address:
             return component
         elif (vault.access_level == 'ORGANIZATION'
                 or component.access_level == 'ORGANIZATION') \
@@ -73,8 +74,10 @@ def get_component(project_id, vault_id, component_id, data):
 
 def update_component(project_id, vault_id, component_id, data):
     try:
-        component = Component.objects.get(component_id=component_id)
-        component_serializer = ComponentSerializer(instance=component, data=data)
+        component = Component.objects.get(component_id=component_id,
+                                          active=True)
+        component_serializer = ComponentSerializer(instance=component,
+                                                   data=data)
 
         component_serializer.is_valid(raise_exception=True)
         component_serializer.save()
@@ -82,6 +85,10 @@ def update_component(project_id, vault_id, component_id, data):
         return component_serializer.data
     except ValidationError:
         raise CustomApiException(500, 'Enter valid details')
+
+
+def delete_component(vault_id):
+    pass
 
 
 def serialize(data):

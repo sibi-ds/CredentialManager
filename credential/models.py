@@ -3,14 +3,26 @@
 from django.db import models
 
 
-class Project(models.Model):
+class BaseModel(models.Model):
+
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    created_by = models.IntegerField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
+    updated_by = models.IntegerField(null=True, blank=True)
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        abstract = True
+
+
+class Project(BaseModel):
     project_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     email_address = models.EmailField(max_length=45, unique=True)
     description = models.TextField()
 
 
-class Employee(models.Model):
+class Employee(BaseModel):
     employee_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     email_address = models.EmailField(max_length=45, unique=True)
@@ -18,7 +30,7 @@ class Employee(models.Model):
                                       blank=True)
 
 
-class Vault(models.Model):
+class Vault(BaseModel):
     vault_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     email_address = models.EmailField(max_length=45)
@@ -29,7 +41,7 @@ class Vault(models.Model):
                                    to_field='project_id')
 
 
-class Component(models.Model):
+class Component(BaseModel):
     component_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     description = models.TextField()
@@ -39,7 +51,7 @@ class Component(models.Model):
                               related_name='components')
 
 
-class Item(models.Model):
+class Item(BaseModel):
     item_id = models.AutoField(primary_key=True)
     key = models.CharField(max_length=45)
     value = models.CharField(max_length=45)
@@ -48,7 +60,7 @@ class Item(models.Model):
                                   related_name='items')
 
 
-class VaultAccess(models.Model):
+class VaultAccess(BaseModel):
     class Meta:
         unique_together = (('vault', 'employee'),)
 
@@ -58,7 +70,7 @@ class VaultAccess(models.Model):
                                  on_delete=models.CASCADE)
 
 
-class ComponentAccess(models.Model):
+class ComponentAccess(BaseModel):
     class Meta:
         unique_together = (('component', 'employee'),)
 
