@@ -23,20 +23,18 @@ def create_component(project_id, vault_id, data):
 
         component_serializer = ComponentSerializer(data=data)
         component_serializer.is_valid(raise_exception=True)
-        print(component_serializer.errors)
-        print(component_serializer)
         component_serializer.save()
 
         return component_serializer.data
     except ValidationError:
-        raise CustomApiException(500, 'Enter valid details')
+        raise CustomApiException(400, 'Enter valid details')
 
 
 def get_component(project_id, vault_id, component_id, data):
     try:
         email_address = data.get('email_address')
 
-        vault = Vault.objects.get(vault_id=vault_id)
+        vault = Vault.objects.get(vault_id=vault_id, active=True)
 
         component = Component.objects.get(vault_id=vault_id,
                                           component_id=component_id,
@@ -68,8 +66,10 @@ def get_component(project_id, vault_id, component_id, data):
             return component
         else:
             return None
-    except ObjectDoesNotExist:
-        raise CustomApiException(400, 'No such component exist')
+    except vault.DoesNotExist:
+        raise CustomApiException(404, 'No such vault exist')
+    except Component.DoesNotExist:
+        raise CustomApiException(404, 'No such component exist')
 
 
 def update_component(project_id, vault_id, component_id, data):
@@ -84,13 +84,6 @@ def update_component(project_id, vault_id, component_id, data):
 
         return component_serializer.data
     except ValidationError:
-        raise CustomApiException(500, 'Enter valid details')
-
-
-def delete_component(vault_id):
-    pass
-
-
-def serialize(data):
-    serializer = ComponentSerializer(data)
-    return Response(serializer.data)
+        raise CustomApiException(400, 'Enter valid details')
+    except ObjectDoesNotExist:
+        raise CustomApiException(404, 'No such component exist')

@@ -18,14 +18,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
         fields = ('employee_id', 'name', 'email_address')
 
 
-class ProjectSerializer(serializers.ModelSerializer):
-    employees = EmployeeSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Project
-        fields = '__all__'
-
-
 class ItemSerializer(serializers.ModelSerializer):
     item_id = serializers.IntegerField(required=False)
 
@@ -103,6 +95,15 @@ class VaultSerializer(serializers.ModelSerializer):
         instance.active = validated_data.get('active', instance.active)
         instance.save()
         return instance
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+    employees = EmployeeSerializer(many=True, read_only=True)
+    vaults = VaultSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Project
+        fields = '__all__'
 
 
 class VaultAccessSerializer(serializers.ModelSerializer):

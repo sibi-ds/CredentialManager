@@ -15,7 +15,15 @@ from credential.utils.api_exceptions import CustomApiException
 
 def create_vault(project_id, data):
     try:
-        data['project'] = project_id
+        employee = employee_service\
+            .is_organization_employee(data.get('email_address'))
+
+        if employee is None:
+            raise CustomApiException(404,
+                                     'You are not belonging '
+                                     'to the organization')
+
+        # data['project'] = project_id
 
         vault_serializer = VaultSerializer(data=data)
         vault_serializer.is_valid(raise_exception=False)
@@ -24,15 +32,17 @@ def create_vault(project_id, data):
 
         return vault_serializer.data
     except ValidationError:
-        raise CustomApiException(500, 'Enter valid details')
+        raise CustomApiException(404, 'Enter valid details')
+    except ObjectDoesNotExist:
+        raise CustomApiException(404,
+                                 'You are not belonging to the organization')
 
 
 def get_vault(project_id, vault_id, data):
     try:
         email_address = data.get('email_address')
 
-        vault = Vault.objects.get(vault_id=vault_id, project_id=project_id,
-                                  active=True)
+        vault = Vault.objects.get(vault_id=vault_id, active=True)
 
         vault_access = user_access_service.get_vault_access(vault_id,
                                                             email_address)
@@ -57,7 +67,7 @@ def get_vault(project_id, vault_id, data):
 
 def update_vault(project_id, vault_id, data):
     try:
-        vault = Vault.objects.get(vault_id=vault_id)
+        vault = Vault.objects.get(vault_id=vault_id, active=True)
 
         vault_serializer = VaultSerializer(vault, data=data, partial=True)
         vault_serializer.is_valid(raise_exception=True)
@@ -68,4 +78,6 @@ def update_vault(project_id, vault_id, data):
 
         return vault
     except ValidationError:
-        raise CustomApiException(500, 'Enter valid details')
+        raise CustomApiException(400, 'Enter valid details')
+    except ObjectDoesNotExist:
+        raise CustomApiException(404, 'No such vault exist')

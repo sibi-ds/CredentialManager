@@ -4,7 +4,6 @@ from django.db import models
 
 
 class BaseModel(models.Model):
-
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     created_by = models.IntegerField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, blank=True)
@@ -37,8 +36,10 @@ class Vault(BaseModel):
     password = models.CharField(max_length=45)
     description = models.TextField()
     access_level = models.CharField(max_length=45)
-    project = models.OneToOneField(Project, on_delete=models.CASCADE,
-                                   to_field='project_id')
+    project = models.ForeignKey(Project, blank=True, null=True,
+                                on_delete=models.CASCADE,
+                                to_field='project_id',
+                                related_name='vaults')
 
 
 class Component(BaseModel):
