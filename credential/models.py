@@ -29,13 +29,21 @@ class Employee(BaseModel):
                                       blank=True)
 
 
+class AccessLevel(BaseModel):
+    access_id = models.AutoField(primary_key=True)
+    access_level = models.CharField(max_length=45, unique=True)
+
+
 class Vault(BaseModel):
     vault_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     email_address = models.EmailField(max_length=45)
     password = models.CharField(max_length=45)
     description = models.TextField()
-    access_level = models.CharField(max_length=45)
+    access_level = models.ForeignKey(AccessLevel, to_field='access_level',
+                                     db_column='access_level',
+                                     related_name='vault',
+                                     on_delete=models.CASCADE)
     project = models.ForeignKey(Project, blank=True, null=True,
                                 on_delete=models.CASCADE,
                                 to_field='project_id',
@@ -46,7 +54,10 @@ class Component(BaseModel):
     component_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     description = models.TextField()
-    access_level = models.CharField(max_length=45)
+    access_level = models.ForeignKey(AccessLevel, to_field='access_level',
+                                     db_column='access_level',
+                                     related_name='component',
+                                     on_delete=models.CASCADE)
     vault = models.ForeignKey(Vault, to_field='vault_id',
                               on_delete=models.CASCADE,
                               related_name='components')

@@ -2,6 +2,7 @@
 """
 from rest_framework import serializers
 
+from credential.models import AccessLevel
 from credential.models import Component
 from credential.models import ComponentAccess
 from credential.models import Employee
@@ -16,6 +17,13 @@ class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = ('employee_id', 'name', 'email_address')
+
+
+class AccessLevelSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = AccessLevel
+        fields = '__all__'
 
 
 class ItemSerializer(serializers.ModelSerializer):

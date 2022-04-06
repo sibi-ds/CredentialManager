@@ -23,8 +23,6 @@ def create_vault(project_id, data):
                                      'You are not belonging '
                                      'to the organization')
 
-        # data['project'] = project_id
-
         vault_serializer = VaultSerializer(data=data)
         vault_serializer.is_valid(raise_exception=True)
         vault_serializer.save()
