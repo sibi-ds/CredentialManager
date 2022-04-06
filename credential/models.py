@@ -62,8 +62,6 @@ class Item(BaseModel):
 
 
 class VaultAccess(BaseModel):
-    class Meta:
-        unique_together = (('vault', 'employee'),)
 
     vault = models.ForeignKey(Vault, on_delete=models.CASCADE)
     employee = models.ForeignKey(Employee, to_field='email_address',
@@ -72,8 +70,6 @@ class VaultAccess(BaseModel):
 
 
 class ComponentAccess(BaseModel):
-    class Meta:
-        unique_together = (('component', 'employee'),)
 
     component = models.ForeignKey(Component, on_delete=models.CASCADE)
     employee = models.ForeignKey(Employee, to_field='email_address',

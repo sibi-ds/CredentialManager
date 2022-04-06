@@ -15,7 +15,7 @@ from credential.utils.api_exceptions import CustomApiException
 
 def create_vault(project_id, data):
     try:
-        employee = employee_service\
+        employee = employee_service \
             .is_organization_employee(data.get('email_address'))
 
         if employee is None:
@@ -26,13 +26,12 @@ def create_vault(project_id, data):
         # data['project'] = project_id
 
         vault_serializer = VaultSerializer(data=data)
-        vault_serializer.is_valid(raise_exception=False)
-        print(vault_serializer.errors)
+        vault_serializer.is_valid(raise_exception=True)
         vault_serializer.save()
 
         return vault_serializer.data
-    except ValidationError:
-        raise CustomApiException(404, 'Enter valid details')
+    except (ValidationError, KeyError):
+        raise CustomApiException(400, 'Enter valid details')
     except ObjectDoesNotExist:
         raise CustomApiException(404,
                                  'You are not belonging to the organization')
@@ -61,13 +60,18 @@ def get_vault(project_id, vault_id, data):
             return vault
         else:
             return None
+    except KeyError:
+        raise CustomApiException(400, 'Enter valid details')
     except ObjectDoesNotExist:
         raise CustomApiException(500, 'No such vault exist')
 
 
 def update_vault(project_id, vault_id, data):
     try:
-        vault = Vault.objects.get(vault_id=vault_id, active=True)
+        email_address = data.get('email_address')
+
+        vault = Vault.objects.get(vault_id=vault_id,
+                                  email_address=email_address)
 
         vault_serializer = VaultSerializer(vault, data=data, partial=True)
         vault_serializer.is_valid(raise_exception=True)
@@ -77,7 +81,27 @@ def update_vault(project_id, vault_id, data):
         vault.pop('components')
 
         return vault
-    except ValidationError:
+    except (ValidationError, KeyError):
+        raise CustomApiException(400, 'Enter valid details')
+    except ObjectDoesNotExist:
+        raise CustomApiException(404, 'No such vault exist')
+
+
+def change_active_status(vault_id, data):
+    try:
+        email_address = data.get('email_address')
+        active = data.get('active')
+
+        vault = Vault.objects.get(vault_id=vault_id)
+
+        if vault.email_address == email_address:
+            vault.active = active
+            vault.save()
+            return active
+        else:
+            raise CustomApiException(400, 'You don\'t have access'
+                                          'to change active status')
+    except KeyError:
         raise CustomApiException(400, 'Enter valid details')
     except ObjectDoesNotExist:
         raise CustomApiException(404, 'No such vault exist')

@@ -4,7 +4,7 @@ components for the vault
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.exceptions import ValidationError
 
-from credential.models import Component
+from credential.models import Component, Item
 from credential.models import Vault
 
 from credential.serializer import ComponentSerializer
@@ -55,18 +55,20 @@ def get_component(project_id, vault_id, component_id, data):
                 and component_access.employee == email_address:
             return component
         elif (vault.access_level == 'ORGANIZATION'
-                or component.access_level == 'ORGANIZATION') \
+              or component.access_level == 'ORGANIZATION') \
                 and employee_service \
                 .is_organization_employee(email_address) is not None:
             return component
         elif (vault.access_level == 'PROJECT'
-                or component.access_level == 'PROJECT') \
+              or component.access_level == 'PROJECT') \
                 and employee_service \
                 .is_project_employee(email_address, project_id) is not None:
             return component
         else:
             return None
-    except vault.DoesNotExist:
+    except KeyError:
+        raise CustomApiException(400, 'Enter valid details')
+    except Vault.DoesNotExist:
         raise CustomApiException(404, 'No such vault exist')
     except Component.DoesNotExist:
         raise CustomApiException(404, 'No such component exist')
@@ -74,8 +76,13 @@ def get_component(project_id, vault_id, component_id, data):
 
 def update_component(project_id, vault_id, component_id, data):
     try:
-        component = Component.objects.get(component_id=component_id,
-                                          active=True)
+        email_address = data.pop('email_address')
+
+        vault = Vault.objects.get(vault_id=vault_id,
+                                  email_address=email_address)
+
+        component = Component.objects.get(component_id=component_id)
+
         component_serializer = ComponentSerializer(instance=component,
                                                    data=data)
 
@@ -83,7 +90,33 @@ def update_component(project_id, vault_id, component_id, data):
         component_serializer.save()
 
         return component_serializer.data
-    except ValidationError:
+    except (ValidationError, KeyError):
         raise CustomApiException(400, 'Enter valid details')
-    except ObjectDoesNotExist:
+    except Vault.DoesNotExist:
+        raise CustomApiException(404, 'No such vault exist')
+    except Component.DoesNotExist:
+        raise CustomApiException(404, 'No such component exist')
+
+
+def change_active_status(vault_id, component_id, data):
+    try:
+        email_address = data.get('email_address')
+        active = data.get('active')
+
+        vault = Vault.objects.get(vault_id=vault_id, active=True)
+        component = Component.objects.get(vault_id=vault_id,
+                                          component_id=component_id)
+
+        if vault.email_address == email_address:
+            component.active = active
+            component.save()
+            return active
+        else:
+            raise CustomApiException(400, 'You don\'t have access'
+                                          'to change active status')
+    except KeyError:
+        raise CustomApiException(400, 'Enter valid details')
+    except Vault.DoesNotExist:
+        raise CustomApiException(404, 'No such vault exist')
+    except Component.DoesNotExist:
         raise CustomApiException(404, 'No such component exist')

@@ -40,6 +40,11 @@ def do_vault(request: HttpRequest, project_id, vault_id):
         vault = vault_service.update_vault(project_id, vault_id, request.data)
         return Response(vault)
 
+    if request.method == 'PATCH':
+        vault_active_status = vault_service \
+            .change_active_status(vault_id, request.data)
+        return Response(f'Active status changes to {vault_active_status}')
+
 
 @api_view(['POST'])
 def create_component(request: HttpRequest, project_id, vault_id):
@@ -67,6 +72,11 @@ def do_component(request: HttpRequest, project_id, vault_id, component_id):
                                                        component_id,
                                                        request.data)
         return Response(component)
+
+    if request.method == 'PATCH':
+        component_active_status = component_service \
+            .change_active_status(vault_id, component_id, request.data)
+        return Response(f'Active status changes to {component_active_status}')
 
 
 @api_view(['POST', 'PUT', 'PATCH'])

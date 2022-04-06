@@ -20,6 +20,15 @@ from credential.utils.api_exceptions import CustomApiException
 def create_vault_access(project_id, vault_id, data):
     try:
         email_address = data.pop('email_address')
+
+        vault_accesses = VaultAccess.objects \
+            .filter(vault=vault_id,
+                    employee=email_address,
+                    active=True)
+
+        if len(vault_accesses) > 0:
+            raise CustomApiException(500, 'Access already given')
+
         employee = employee_service.is_organization_employee(email_address)
 
         if employee is None:
@@ -34,9 +43,7 @@ def create_vault_access(project_id, vault_id, data):
         vault_access_serializer.save()
 
         return vault_access_serializer.data
-    except ValidationError:
-        raise CustomApiException(500, 'Access already given')
-    except KeyError:
+    except (KeyError, ValidationError):
         raise CustomApiException(500, 'Enter valid details')
 
 
@@ -59,7 +66,7 @@ def remove_vault_access(project_id, vault_id, data):
                         + ' is removed')
     except ObjectDoesNotExist:
         return Response('No such vault access exist')
-    except ValidationError:
+    except (ValidationError, KeyError):
         return CustomApiException(500, 'Enter valid details')
 
 
@@ -76,6 +83,15 @@ def get_vault_access(vault_id, email_address):
 def create_component_access(project_id, vault_id, component_id, data):
     try:
         email_address = data.pop('email_address')
+
+        component_accesses = ComponentAccess.objects \
+            .filter(component=component_id,
+                    employee=email_address,
+                    active=True)
+
+        if len(component_accesses) > 0:
+            raise CustomApiException(500, 'Access already given')
+
         employee = employee_service.is_organization_employee(email_address)
 
         if employee is None:
@@ -90,9 +106,7 @@ def create_component_access(project_id, vault_id, component_id, data):
         component_access_serializer.save()
 
         return component_access_serializer.data
-    except ValidationError:
-        raise CustomApiException(500, 'Access already given')
-    except KeyError:
+    except (ValidationError, KeyError):
         raise CustomApiException(500, 'Enter valid details')
 
 
@@ -109,14 +123,14 @@ def remove_component_access(project_id, vault_id, component_id, data):
             component_access, data=data, partial=True
         )
 
-        component_access_serializer.is_valid(raise_exception=False)
+        component_access_serializer.is_valid(raise_exception=True)
         component_access_serializer.save()
 
         return Response('The access for ' + employee_email_address
                         + ' is removed')
     except ObjectDoesNotExist:
         return Response('No such component access exist')
-    except ValidationError:
+    except (ValidationError, KeyError):
         raise CustomApiException(500, 'Enter valid details')
 
 
