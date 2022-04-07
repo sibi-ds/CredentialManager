@@ -1,8 +1,12 @@
+"""This module is used to throw custom exceptions
+"""
 from rest_framework.views import exception_handler
 from rest_framework.exceptions import APIException
 
 
 def custom_exception_handler(exc, context):
+    """This method used to handle custom exception
+    """
     response = exception_handler(exc, context)
 
     if response is not None:
@@ -15,6 +19,8 @@ def custom_exception_handler(exc, context):
 
 
 class CustomApiException(APIException):
+    """This class used to throw custom exception
+    """
     detail = None
     status_code = None
 

@@ -1,6 +1,7 @@
 """This module contains all model classes
 """
 from django.db import models
+from django_cryptography.fields import encrypt
 
 
 class BaseModel(models.Model):
@@ -38,7 +39,7 @@ class Vault(BaseModel):
     vault_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     email_address = models.EmailField(max_length=45)
-    password = models.CharField(max_length=45)
+    password = encrypt(models.CharField(max_length=45))
     description = models.TextField()
     access_level = models.ForeignKey(AccessLevel, to_field='access_level',
                                      db_column='access_level',
@@ -66,7 +67,7 @@ class Component(BaseModel):
 class Item(BaseModel):
     item_id = models.AutoField(primary_key=True)
     key = models.CharField(max_length=45)
-    value = models.CharField(max_length=45)
+    value = encrypt(models.CharField(max_length=45))
     component = models.ForeignKey(Component, on_delete=models.CASCADE,
                                   to_field='component_id',
                                   related_name='items')
