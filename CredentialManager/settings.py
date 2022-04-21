@@ -82,7 +82,7 @@ DATABASES = {
         'NAME': 'credential_manager',
         'USER': 'postgres',
         'PASSWORD': 'root',
-        'HOST': 'localhost'
+        'HOST': 'localhost',
     }
 }
 
@@ -176,7 +176,7 @@ AUTH_USER_MODEL = 'employee.EmployeeAccount'
 #         'employee.serializers.EmployeeAccountSerializer',
 # }
 
-SIMPLE_JWT = {
-    'REFRESH_TOKEN_LIFETIME': timedelta(seconds=10),
-    'ROTATE_REFRESH_TOKENS': True,
-}
+# SIMPLE_JWT = {
+#     'REFRESH_TOKEN_LIFETIME': timedelta(seconds=10),
+#     'ROTATE_REFRESH_TOKENS': True,
+# }

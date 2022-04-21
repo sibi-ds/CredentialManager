@@ -13,12 +13,33 @@ from rest_framework.response import Response
 from datetime import timedelta
 from django.utils import timezone
 
+from employee.models import EmployeeAccount
+from employee.serializers import EmployeeAccountSerializer
+from utils.api_exceptions import CustomApiException
+
+
+@csrf_exempt
+@api_view(["POST"])
+@permission_classes((AllowAny,))
+def create_employee(request):
+    name = request.data.get("name")
+    email = request.data.get("email")
+    password = request.data.get("password")
+
+    if email is None or password is None or name is None:
+        raise CustomApiException(400, 'Please provide name, email and password')
+
+    employee = EmployeeAccount.objects.create_user(email, password, name)
+    employee_serializer = EmployeeAccountSerializer(employee)
+
+    return Response(employee_serializer.data)
+
 
 @csrf_exempt
 @api_view(["POST"])
 @permission_classes((AllowAny,))
 def login(request):
-    username = request.data.get("username")
+    username = request.data.get("email")
     password = request.data.get("password")
     if username is None or password is None:
         return Response({'error': 'Please provide both username and password'},
@@ -29,7 +50,6 @@ def login(request):
         return Response({'error': 'Invalid Credentials'},
                         status=HTTP_404_NOT_FOUND)
 
-    # token, _ = Token.objects.get_or_create(user=user)
     token, _ = Token.objects.get_or_create(user=user)
     return Response({'token': token.key, 'expires_in': expires_in(token)},
                     status=HTTP_200_OK)

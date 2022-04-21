@@ -1,5 +1,6 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.contrib.auth.models import PermissionsMixin
+from django.contrib.auth.models import PermissionsMixin, AbstractUser
 
 from django.db import models
 
@@ -19,6 +20,7 @@ class BaseModel(models.Model):
 
 
 class EmployeeAccount(AbstractBaseUser, PermissionsMixin, BaseModel):
+    employee_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     email = models.EmailField(unique=True)
     is_staff = models.BooleanField(default=True)
@@ -28,6 +30,6 @@ class EmployeeAccount(AbstractBaseUser, PermissionsMixin, BaseModel):
                                       blank=True)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['name']
 
     objects = EmployeeManager()

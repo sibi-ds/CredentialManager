@@ -8,13 +8,12 @@ from rest_framework.exceptions import ValidationError
 from credential.models import Component, Item
 from credential.models import Vault
 
-from credential.serializer import ComponentSerializer
+from credential.serializers import ComponentSerializer
 
 from credential.service import employee_service
 from credential.service import user_access_service
 
 from credential.utils.api_exceptions import CustomApiException
-
 
 logger = logging.getLogger('credential-manager-logger')
 
@@ -38,7 +37,7 @@ def get_component(vault_id, component_id, data):
     logger.info(f'Enter {__name__} module, {get_component.__name__} method')
 
     try:
-        email_address = data.get('email_address')
+        email = data.get('email')
 
         vault = Vault.objects.get(vault_id=vault_id, active=True)
 
@@ -47,32 +46,37 @@ def get_component(vault_id, component_id, data):
                                           active=True)
 
         component_access = user_access_service \
-            .get_component_access(component_id, email_address)
+            .get_component_access(component_id, email)
 
         vault_access = user_access_service \
-            .get_vault_access(vault_id, email_address)
+            .get_vault_access(vault_id, email)
 
         response_component = None
 
-        if vault.email_address == email_address:
+        if vault.email == email:
             response_component = component
         elif vault_access is not None \
-                and vault_access.employee == email_address:
+                and vault_access.employee == email:
             response_component = component
         elif component_access is not None \
-                and component_access.employee == email_address:
+                and component_access.employee == email:
             response_component = component
         elif (vault.access_level == 'ORGANIZATION'
               or component.access_level == 'ORGANIZATION') \
                 and employee_service \
-                .is_organization_employee(email_address) is not None:
+                .is_organization_employee(email) is not None:
             response_component = component
         elif (vault.project is not None
-                and vault.access_level == 'PROJECT'
-                or component.access_level == 'PROJECT') \
+              and vault.access_level == 'PROJECT'
+              or component.access_level == 'PROJECT') \
                 and employee_service \
-                .is_project_employee(email_address, vault.project) is not None:
+                .is_project_employee(email, vault.project) is not None:
             response_component = component
+
+        if response_component is None:
+            raise CustomApiException(400,
+                                     "You don't have access for this "
+                                     "component")
 
         component_serializer = ComponentSerializer(response_component)
         logger.info(f'Exit {__name__} module, {get_component.__name__} method')
@@ -96,10 +100,10 @@ def update_component(vault_id, component_id, data):
     logger.info(f'Enter {__name__} module, {update_component.__name__} method')
 
     try:
-        email_address = data.pop('email_address')
+        email = data.pop('email')
 
         vault = Vault.objects.get(vault_id=vault_id,
-                                  email_address=email_address)
+                                  email=email)
 
         component = Component.objects.get(component_id=component_id)
 
@@ -138,14 +142,14 @@ def change_active_status(vault_id, component_id, data):
                 f'{change_active_status.__name__} method')
 
     try:
-        email_address = data.get('email_address')
+        email = data.get('email')
         active = data.get('active')
 
         vault = Vault.objects.get(vault_id=vault_id, active=True)
         component = Component.objects.get(vault_id=vault_id,
                                           component_id=component_id)
 
-        if vault.email_address == email_address:
+        if vault.email == email:
             component.active = active
             component.save()
             return active

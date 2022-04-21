@@ -11,15 +11,31 @@ from rest_framework.response import Response
 from credential.models import ComponentAccess, Vault, Component
 from credential.models import VaultAccess
 
-from credential.serializer import ComponentAccessSerializer
-from credential.serializer import VaultAccessSerializer
+from credential.serializers import ComponentAccessSerializer
+from credential.serializers import VaultAccessSerializer
 
 from credential.service import employee_service
 
 from credential.utils.api_exceptions import CustomApiException
 
-
 logger = logging.getLogger('credential-manager-logger')
+
+
+def get_vault_access(vault_id, email):
+    logger.info(f'Enter {__name__} module, {get_vault_access.__name__} method')
+
+    try:
+        vault_access = VaultAccess.objects.get(vault=vault_id,
+                                               employee=email,
+                                               active=True)
+        logger.info(f'Exit {__name__} module, '
+                    f'{get_vault_access.__name__} method')
+        return vault_access
+    except ObjectDoesNotExist:
+        logger.error('Vault Access for the given credentials does not exist')
+        logger.info(f'Enter {__name__} module, '
+                    f'{get_vault_access.__name__} method')
+        return None
 
 
 def create_vault_access(vault_id, data):
@@ -27,19 +43,30 @@ def create_vault_access(vault_id, data):
                 f'{create_vault_access.__name__} method')
 
     try:
-        email_address = data.pop('email_address')
+        email = data.pop('email')
 
-        vault_ = Vault.objects.get(vault_id=vault_id,
-                                   email_address=email_address)
+        vault = Vault.objects.get(vault_id=vault_id, active=True)
 
-        employee = employee_service.is_organization_employee(email_address)
+        employee = employee_service.is_organization_employee(email)
 
         if employee is None:
+            logger.error('Employee not belongs to the organization')
+            logger.info(f'Exit {__name__} module, '
+                        f'{create_vault_access.__name__} method')
             raise CustomApiException(500, 'This user is not belong '
                                           'to the organization')
 
         data['vault'] = vault_id
-        data['employee'] = email_address
+        data['employee'] = email
+
+        vault_access = get_vault_access(vault_id, email)
+
+        if vault_access is not None:
+            logger.error('Vault access already given')
+            logger.info(f'Exit {__name__} module, '
+                        f'{create_vault_access.__name__} method')
+            raise CustomApiException(500, 'Vault access already given '
+                                          'for the employee')
 
         vault_access_serializer = VaultAccessSerializer(data=data)
         vault_access_serializer.is_valid(raise_exception=True)
@@ -56,24 +83,19 @@ def create_vault_access(vault_id, data):
         logger.info(f'Exit {__name__} module, '
                     f'{create_vault_access.__name__} method')
         raise CustomApiException(404, 'No such vault exist')
-    except CustomApiException as e:
-        logger.error('The given email address is not belong '
-                     'to the organization')
-        logger.info(f'Exit {__name__} module, '
-                    f'{create_vault_access.__name__} method')
-        raise CustomApiException(e.status_code, e.detail)
 
 
-def remove_vault_access(project_id, vault_id, data):
+def remove_vault_access(vault_id, data):
     logger.info(f'Enter {__name__} module, '
                 f'{remove_vault_access.__name__} method')
 
     try:
-        employee_email_address = data.pop('email_address')
+        email = data.pop('email')
 
         vault_access = VaultAccess.objects.get(
-            employee=employee_email_address,
-            vault=vault_id
+            employee=email,
+            vault=vault_id,
+            active=True
         )
 
         vault_access_serializer = VaultAccessSerializer(vault_access,
@@ -82,7 +104,7 @@ def remove_vault_access(project_id, vault_id, data):
         vault_access_serializer.is_valid(raise_exception=True)
         vault_access_serializer.save()
 
-        return Response('The access for ' + employee_email_address
+        return Response('The access for ' + email
                         + ' is removed')
     except ObjectDoesNotExist:
         logger.error('The vault access does not exist '
@@ -98,20 +120,13 @@ def remove_vault_access(project_id, vault_id, data):
         return CustomApiException(500, 'Enter valid details')
 
 
-def get_vault_access(vault_id, email_address):
-    logger.info(f'Enter {__name__} module, {get_vault_access.__name__} method')
-
+def get_component_access(component_id, email):
     try:
-        vault_access = VaultAccess.objects.get(vault=vault_id,
-                                               employee=email_address,
-                                               active=True)
-        logger.info(f'Exit {__name__} module, '
-                    f'{get_vault_access.__name__} method')
-        return vault_access
+        component = ComponentAccess.objects.get(component_id=component_id,
+                                                employee=email,
+                                                active=True)
+        return component
     except ObjectDoesNotExist:
-        logger.error('Vault Access for the given credentials does not exist')
-        logger.info(f'Enter {__name__} module, '
-                    f'{get_vault_access.__name__} method')
         return None
 
 
@@ -120,22 +135,35 @@ def create_component_access(vault_id, component_id, data):
                 f'{create_component_access.__name__} method')
 
     try:
-        email_address = data.pop('email_address')
+        email = data.pop('email')
 
-        vault = Vault.objects.get(vault_id=vault_id,
-                                  email_address=email_address)
+        vault = Vault.objects.get(vault_id=vault_id, active=True)
 
         component = Component.objects.get(vault_id=vault_id,
-                                          component_id=component_id)
+                                          component_id=component_id,
+                                          active=True)
 
-        employee = employee_service.is_organization_employee(email_address)
+        employee = employee_service.is_organization_employee(email)
 
         if employee is None:
+            logger.error('The given email address is not belong '
+                         'to the organization')
+            logger.info(f'Exit {__name__} module, '
+                        f'{create_component_access.__name__} method')
             raise CustomApiException(404, 'This user is not belong '
                                           'to the organization')
 
-        data['employee'] = email_address
+        data['employee'] = email
         data['component'] = component_id
+
+        component_access = get_component_access(component_id, email)
+
+        if component_access is not None:
+            logger.error('Component access already given')
+            logger.info(f'Exit {__name__} module, '
+                        f'{create_component_access.__name__} method')
+            raise CustomApiException(404, 'Component access already given'
+                                          'for the employee')
 
         component_access_serializer = ComponentAccessSerializer(data=data)
         component_access_serializer.is_valid(raise_exception=True)
@@ -159,12 +187,6 @@ def create_component_access(vault_id, component_id, data):
         logger.info(f'Exit {__name__} module, '
                     f'{create_component_access.__name__} method')
         raise CustomApiException(500, 'Enter valid details')
-    except CustomApiException as e:
-        logger.error('The given email address is not belong '
-                     'to the organization')
-        logger.info(f'Exit {__name__} module, '
-                    f'{create_component_access.__name__} method')
-        raise CustomApiException(e.status_code, e.detail)
 
 
 def remove_component_access(vault_id, component_id, data):
@@ -172,11 +194,12 @@ def remove_component_access(vault_id, component_id, data):
                 f'{remove_component_access.__name__} method')
 
     try:
-        employee_email_address = data.get('email_address')
+        email = data.get('email')
 
         component_access = ComponentAccess.objects.get(
-            employee=employee_email_address,
-            component=component_id
+            employee=email,
+            component=component_id,
+            active=True
         )
 
         component_access_serializer = ComponentAccessSerializer(
@@ -186,7 +209,7 @@ def remove_component_access(vault_id, component_id, data):
         component_access_serializer.is_valid(raise_exception=True)
         component_access_serializer.save()
 
-        return Response('The access for ' + employee_email_address
+        return Response('The access for ' + email
                         + ' is removed')
     except ObjectDoesNotExist:
         logger.error('No component access was provided for the given details')
@@ -198,13 +221,3 @@ def remove_component_access(vault_id, component_id, data):
         logger.info(f'Exit {__name__} module, '
                     f'{remove_component_access.__name__} method')
         raise CustomApiException(500, 'Enter valid details')
-
-
-def get_component_access(component_id, email_address):
-    try:
-        component = ComponentAccess.objects.get(component_id=component_id,
-                                                employee=email_address,
-                                                active=True)
-        return component
-    except ObjectDoesNotExist:
-        return None

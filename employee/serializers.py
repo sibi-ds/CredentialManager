@@ -9,4 +9,4 @@ class EmployeeAccountSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EmployeeAccount
-        fields = ['id', 'name', 'email', ]
+        fields = ['employee_id', 'name', 'email', ]

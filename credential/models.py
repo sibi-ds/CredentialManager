@@ -1,7 +1,11 @@
 """This module contains all model classes
 """
+from django.contrib.auth.hashers import make_password
 from django.db import models
 from django_cryptography.fields import encrypt
+
+from employee.models import EmployeeAccount
+from project.models import Project
 
 
 class BaseModel(models.Model):
@@ -15,21 +19,6 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class Project(BaseModel):
-    project_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=45)
-    email_address = models.EmailField(max_length=45, unique=True)
-    description = models.TextField()
-
-
-class Employee(BaseModel):
-    employee_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=45)
-    email_address = models.EmailField(max_length=45, unique=True)
-    projects = models.ManyToManyField(Project, related_name='employees',
-                                      blank=True)
-
-
 class AccessLevel(BaseModel):
     access_id = models.AutoField(primary_key=True)
     access_level = models.CharField(max_length=45, unique=True)
@@ -38,8 +27,8 @@ class AccessLevel(BaseModel):
 class Vault(BaseModel):
     vault_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
-    email_address = models.EmailField(max_length=45)
-    password = encrypt(models.CharField(max_length=45))
+    email = models.EmailField(max_length=45)
+    password = models.CharField(max_length=128)
     description = models.TextField()
     access_level = models.ForeignKey(AccessLevel, to_field='access_level',
                                      db_column='access_level',
@@ -74,16 +63,14 @@ class Item(BaseModel):
 
 
 class VaultAccess(BaseModel):
-
     vault = models.ForeignKey(Vault, on_delete=models.CASCADE)
-    employee = models.ForeignKey(Employee, to_field='email_address',
-                                 db_column='email_address',
+    employee = models.ForeignKey(EmployeeAccount, to_field='email',
+                                 db_column='email',
                                  on_delete=models.CASCADE)
 
 
 class ComponentAccess(BaseModel):
-
     component = models.ForeignKey(Component, on_delete=models.CASCADE)
-    employee = models.ForeignKey(Employee, to_field='email_address',
-                                 db_column='email_address',
+    employee = models.ForeignKey(EmployeeAccount, to_field='email',
+                                 db_column='email',
                                  on_delete=models.CASCADE)

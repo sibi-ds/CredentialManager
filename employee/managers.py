@@ -6,19 +6,19 @@ class EmployeeManager(BaseUserManager):
     Custom user model manager where email is the unique identifiers
     for authentication instead of usernames.
     """
-    def create_user(self, email, password, **extra_fields):
+    def create_user(self, email, password, name, **extra_fields):
         """
         Create and save a User with the given email and password.
         """
         if not email:
             raise ValueError('The Email must be set')
         email = self.normalize_email(email)
-        employee = self.model(email=email, **extra_fields)
+        employee = self.model(name=name, email=email, **extra_fields)
         employee.set_password(password)
         employee.save()
         return employee
 
-    def create_superuser(self, email, password, **extra_fields):
+    def create_superuser(self, email, password, name, **extra_fields):
         """
         Create and save a SuperUser with the given email and password.
         """
@@ -30,4 +30,4 @@ class EmployeeManager(BaseUserManager):
             raise ValueError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
-        return self.create_user(email, password, **extra_fields)
+        return self.create_user(email, password, name, **extra_fields)

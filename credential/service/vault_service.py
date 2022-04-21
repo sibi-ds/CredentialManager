@@ -7,7 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from credential.models import Vault
 
-from credential.serializer import VaultSerializer
+from credential.serializers import VaultSerializer
 
 from rest_framework.exceptions import ValidationError
 
@@ -25,7 +25,7 @@ def create_vault(data):
 
     try:
         employee = employee_service \
-            .is_organization_employee(data.get('email_address'))
+            .is_organization_employee(data.get('email'))
 
         if employee is None:
             logger.error('The given email address is not belong '
@@ -58,27 +58,26 @@ def get_vault(vault_id, data):
     logger.info(f'Enter {__name__} module, {get_vault.__name__} method')
 
     try:
-        email_address = data.get('email_address')
+        email = data.get('email')
 
         vault = Vault.objects.get(vault_id=vault_id, active=True)
 
-        vault_access = user_access_service.get_vault_access(vault_id,
-                                                            email_address)
+        vault_access = user_access_service.get_vault_access(vault_id, email)
 
         response_vault = None
 
-        if vault.email_address == email_address:
+        if vault.email == email:
             response_vault = vault
         elif vault_access is not None:
             response_vault = vault
         elif vault.access_level == 'ORGANIZATION' \
-                and employee_service.is_organization_employee(email_address) \
+                and employee_service.is_organization_employee(email) \
                 is not None:
             response_vault = vault
         elif vault.project is not None \
                 and vault.access_level == 'PROJECT' \
                 and employee_service \
-                .is_project_employee(email_address, vault.project) is not None:
+                .is_project_employee(email, vault.project) is not None:
             response_vault = vault
 
         if response_vault is None:
@@ -108,10 +107,10 @@ def update_vault(vault_id, data):
     logger.info(f'Enter {__name__} module, {update_vault.__name__} method')
 
     try:
-        email_address = data.get('email_address')
+        email = data.get('email')
 
         vault = Vault.objects.get(vault_id=vault_id,
-                                  email_address=email_address)
+                                  email=email)
 
         vault_serializer = VaultSerializer(vault, data=data, partial=True)
         vault_serializer.is_valid(raise_exception=True)

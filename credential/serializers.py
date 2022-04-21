@@ -1,22 +1,16 @@
 """This module contains serializers for all the models
 """
+from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
 from credential.models import AccessLevel
 from credential.models import Component
 from credential.models import ComponentAccess
-from credential.models import Employee
+from credential.models import EmployeeAccount
 from credential.models import Item
 from credential.models import Project
 from credential.models import Vault
 from credential.models import VaultAccess
-
-
-class EmployeeSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Employee
-        fields = ('employee_id', 'name', 'email_address')
 
 
 class AccessLevelSerializer(serializers.ModelSerializer):
@@ -84,14 +78,28 @@ class ComponentSerializer(serializers.ModelSerializer):
 
 class VaultSerializer(serializers.ModelSerializer):
     components = ComponentSerializer(many=True, read_only=True)
-    email_address = serializers.CharField(write_only=True)
+    email = serializers.CharField(write_only=True)
     password = serializers.CharField(write_only=True)
 
     class Meta:
         model = Vault
         fields = ('vault_id', 'name', 'description', 'access_level', 'active',
                   'created_at', 'created_by', 'updated_at', 'updated_by',
-                  'project', 'email_address', 'password', 'components')
+                  'project', 'email', 'password', 'components')
+
+    def create(self, validated_data):
+        name = validated_data.get('name')
+        description = validated_data.get('description')
+        access_level = validated_data.get('access_level')
+        project = validated_data.get('project')
+        email = validated_data.get('email')
+        vault = Vault.objects.create(name=name, description=description,
+                                     access_level=access_level, active=True,
+                                     email=email, project=project)
+        vault.password = make_password(validated_data.get('password'))
+        vault.save()
+
+        return vault
 
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
@@ -103,15 +111,6 @@ class VaultSerializer(serializers.ModelSerializer):
         instance.active = validated_data.get('active', instance.active)
         instance.save()
         return instance
-
-
-class ProjectSerializer(serializers.ModelSerializer):
-    employees = EmployeeSerializer(many=True, read_only=True)
-    vaults = VaultSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Project
-        fields = '__all__'
 
 
 class VaultAccessSerializer(serializers.ModelSerializer):

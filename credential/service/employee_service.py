@@ -2,18 +2,17 @@ import logging
 
 from django.core.exceptions import ObjectDoesNotExist
 
-from credential.models import Employee
-
+from credential.models import EmployeeAccount
 
 logger = logging.getLogger('credential-manager-logger')
 
 
-def is_organization_employee(email_address):
+def is_organization_employee(email):
     logger.info(f'Enter {__name__} module, '
                 f'{is_organization_employee.__name__} method')
 
     try:
-        employee = Employee.objects.get(email_address=email_address)
+        employee = EmployeeAccount.objects.get(email=email)
         logger.info(f'Exit {__name__} module, '
                     f'{is_organization_employee.__name__} method')
         return employee
@@ -25,13 +24,13 @@ def is_organization_employee(email_address):
         return None
 
 
-def is_project_employee(email_address, project_id):
+def is_project_employee(email, project_id):
     logger.info(f'Enter {__name__} module, '
                 f'{is_project_employee.__name__} method')
 
     try:
-        employee = Employee.objects.get(projects__project_id=project_id,
-                                        email_address=email_address)
+        employee = EmployeeAccount.objects.get(projects__project_id=project_id,
+                                               email=email)
         logger.info(f'Exit {__name__} module, '
                     f'{is_project_employee.__name__} method')
         return employee

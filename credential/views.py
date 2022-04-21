@@ -3,14 +3,15 @@ vaults. components, item and usr accesses
 """
 import logging
 
+from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from credential.models import Project, Vault
-from credential.serializer import VaultSerializer, ProjectSerializer
-from credential.serializer import ComponentSerializer
+from credential.serializers import VaultSerializer
+from project.serializers import ProjectSerializer
 
 from credential.service import component_service
 from credential.service import user_access_service
@@ -170,12 +171,9 @@ def do_component_access(request: HttpRequest, vault_id, component_id):
 
 @api_view(['POST'])
 def get(request):
-    vault_id = request.data.get('vault_id')
-    vault = Vault.objects.get(vault_id=vault_id)
-
-    project_id = vault.project
-
-    if project_id is None:
-        print('none')
+    email = request.data.get('email')
+    password = request.data.get('password')
+    # password = make_password(password)
+    vault = Vault.objects.get(email=email, password=password)
 
     return Response(VaultSerializer(vault).data)
