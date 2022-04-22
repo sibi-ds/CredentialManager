@@ -51,8 +51,27 @@ def login(request):
                         status=HTTP_404_NOT_FOUND)
 
     token, _ = Token.objects.get_or_create(user=user)
-    return Response({'token': token.key, 'expires_in': expires_in(token)},
+
+    seconds = request.data.get("seconds")
+
+    if is_token_expired(token, seconds):
+        token.delete()
+
+    token, _ = Token.objects.get_or_create(user=user)
+
+    return Response({'token': token.key, 'expires_in': expiring_in(token,
+                                                                   seconds)},
                     status=HTTP_200_OK)
+
+
+def expiring_in(token, seconds):
+    time_elapsed = timezone.now() - token.created
+    left_time = timedelta(seconds=seconds) - time_elapsed
+    return left_time
+
+
+def is_token_expired(token, seconds):
+    return expiring_in(token, seconds) < timedelta(seconds=0)
 
 
 @csrf_exempt
@@ -63,23 +82,11 @@ def sample(request):
     return Response(data, status=HTTP_200_OK)
 
 
-# this return left time
-def expires_in(token):
-    time_elapsed = timezone.now() - token.created
-    left_time = timedelta(seconds=10) - time_elapsed
-    return left_time
-
-
-# token checker if token expired or not
-def is_token_expired(token):
-    return expires_in(token) < timedelta(seconds=0)
-
-
 # if token is expired new token will be established
 # If token is expired then it will be removed
 # and new one with different key will be created
-def token_expire_handler(token):
-    is_expired = is_token_expired(token)
+def token_expire_handler(token, seconds):
+    is_expired = is_token_expired(token, seconds)
     if is_expired:
         token.delete()
         token = Token.objects.create(user=token.user)

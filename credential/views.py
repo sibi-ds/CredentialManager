@@ -6,7 +6,8 @@ import logging
 from django.contrib.auth.hashers import make_password
 from django.http import HttpRequest
 
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from credential.models import Project, Vault
@@ -36,6 +37,7 @@ def create_vault(request: HttpRequest):
 
 
 @api_view(['GET', 'PUT', 'PATCH'])
+@permission_classes((IsAuthenticated, ))
 def do_vault(request: HttpRequest, vault_id):
     logger.info(f'Enter {__name__} module, {do_vault.__name__} method')
 
