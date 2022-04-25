@@ -1,5 +1,4 @@
-"""This module is used to create, update and delete
-vault for the project
+"""This module is used to create, update and delete vault
 """
 import logging
 
@@ -11,7 +10,7 @@ from credential.serializers import VaultSerializer
 
 from rest_framework.exceptions import ValidationError
 
-from credential.service import employee_service
+from employee.service import employee_service
 from credential.service import user_access_service
 
 from credential.utils.api_exceptions import CustomApiException
@@ -21,21 +20,12 @@ logger = logging.getLogger('credential-manager-logger')
 
 
 def create_vault(data):
+    """used to create vault for a specific employee of the organization
+    where project mapping is optional
+    """
     logger.info(f'Enter {__name__} module, {create_vault.__name__} method')
 
     try:
-        employee = employee_service \
-            .is_organization_employee(data.get('email'))
-
-        if employee is None:
-            logger.error('The given email address is not belong '
-                         'to the organization')
-            logger.info(
-                f'Exit {__name__} module, {create_vault.__name__} method')
-            raise CustomApiException(404,
-                                     'You are not belonging '
-                                     'to the organization')
-
         vault_serializer = VaultSerializer(data=data)
         vault_serializer.is_valid(raise_exception=True)
         vault_serializer.save()
@@ -47,14 +37,11 @@ def create_vault(data):
         logger.error('Vault creation failure')
         logger.info(f'Exit {__name__} module, {create_vault.__name__} method')
         raise CustomApiException(400, 'Enter valid details')
-    except ObjectDoesNotExist:
-        logger.error('Vault creation failure')
-        logger.info(f'Exit {__name__} module, {create_vault.__name__} method')
-        raise CustomApiException(404,
-                                 'You are not belonging to the organization')
 
 
 def get_vault(vault_id, data):
+    """used to get vault of a specific user
+    """
     logger.info(f'Enter {__name__} module, {get_vault.__name__} method')
 
     try:
@@ -62,22 +49,21 @@ def get_vault(vault_id, data):
 
         vault = Vault.objects.get(vault_id=vault_id, active=True)
 
-        vault_access = user_access_service.get_vault_access(vault_id, email)
-
         response_vault = None
 
-        if vault.email == email:
+        if vault.employee.email == email:
             response_vault = vault
-        elif vault_access is not None:
-            response_vault = vault
-        elif vault.access_level == 'ORGANIZATION' \
+        elif vault.access_level.access_level == 'ORGANIZATION' \
                 and employee_service.is_organization_employee(email) \
                 is not None:
             response_vault = vault
-        elif vault.project is not None \
-                and vault.access_level == 'PROJECT' \
+        elif vault.access_level.access_level == 'PROJECT' \
+                and vault.project is not None \
                 and employee_service \
-                .is_project_employee(email, vault.project) is not None:
+                .is_project_employee(email, vault.project.project_id) \
+                is not None:
+            response_vault = vault
+        elif user_access_service.get_vault_access(vault_id, email) is not None:
             response_vault = vault
 
         if response_vault is None:
@@ -104,13 +90,15 @@ def get_vault(vault_id, data):
 
 
 def update_vault(vault_id, data):
+    """used to update vault details
+    """
     logger.info(f'Enter {__name__} module, {update_vault.__name__} method')
 
     try:
-        email = data.get('email')
+        email = data.get('employee')
 
         vault = Vault.objects.get(vault_id=vault_id,
-                                  email=email)
+                                  employee=email)
 
         vault_serializer = VaultSerializer(vault, data=data, partial=True)
         vault_serializer.is_valid(raise_exception=True)
@@ -134,6 +122,8 @@ def update_vault(vault_id, data):
 
 
 def change_active_status(vault_id, data):
+    """used to change active status of a vault
+    """
     logger.info(f'Enter {__name__} module, '
                 f'{change_active_status.__name__} method')
 

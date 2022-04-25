@@ -1,4 +1,5 @@
-from django.contrib.auth import get_user_model
+"""this module contains employee models
+"""
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin, AbstractUser
 
@@ -20,6 +21,9 @@ class BaseModel(models.Model):
 
 
 class EmployeeAccount(AbstractBaseUser, PermissionsMixin, BaseModel):
+    """model to define employee details
+    which is used as the django auth user model
+    """
     employee_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     email = models.EmailField(unique=True)

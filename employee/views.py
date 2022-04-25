@@ -1,36 +1,52 @@
+"""this module is used to do employee related operations
+"""
+import logging
+
 from django.contrib.auth import authenticate
 from django.views.decorators.csrf import csrf_exempt
+
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
     HTTP_200_OK
 )
-from rest_framework.response import Response
 
 from datetime import timedelta
+
 from django.utils import timezone
 
 from employee.models import EmployeeAccount
 from employee.serializers import EmployeeAccountSerializer
+
 from utils.api_exceptions import CustomApiException
+
+
+logger = logging.getLogger('credential-manager-logger')
 
 
 @csrf_exempt
 @api_view(["POST"])
 @permission_classes((AllowAny,))
 def create_employee(request):
+    """used to create employee
+    """
+    logger.info(f'Enter {__name__} module, create_employee method')
     name = request.data.get("name")
     email = request.data.get("email")
     password = request.data.get("password")
 
     if email is None or password is None or name is None:
-        raise CustomApiException(400, 'Please provide name, email and password')
+        logger.error('Employee creation failed')
+        raise CustomApiException(400,
+                                 'Please provide name, email and password')
 
     employee = EmployeeAccount.objects.create_user(email, password, name)
     employee_serializer = EmployeeAccountSerializer(employee)
+    logger.info(f'Exit {__name__} module, create_employee method')
 
     return Response(employee_serializer.data)
 
@@ -65,12 +81,16 @@ def login(request):
 
 
 def expiring_in(token, seconds):
+    """used to calculate the valid time left for a token
+    """
     time_elapsed = timezone.now() - token.created
     left_time = timedelta(seconds=seconds) - time_elapsed
     return left_time
 
 
 def is_token_expired(token, seconds):
+    """used to determine whether a token is expired or not
+    """
     return expiring_in(token, seconds) < timedelta(seconds=0)
 
 

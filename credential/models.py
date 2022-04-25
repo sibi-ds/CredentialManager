@@ -1,6 +1,5 @@
 """This module contains all model classes
 """
-from django.contrib.auth.hashers import make_password
 from django.db import models
 from django_cryptography.fields import encrypt
 
@@ -8,6 +7,7 @@ from employee.models import EmployeeAccount
 from project.models import Project
 
 
+# all models subclasses the base model
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     created_by = models.IntegerField(null=True, blank=True)
@@ -19,15 +19,19 @@ class BaseModel(models.Model):
         abstract = True
 
 
+# model to define access level for a vault and component
 class AccessLevel(BaseModel):
     access_id = models.AutoField(primary_key=True)
     access_level = models.CharField(max_length=45, unique=True)
 
 
+# model to define vault for a user
 class Vault(BaseModel):
     vault_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
-    email = models.EmailField(max_length=45)
+    employee = models.ForeignKey(EmployeeAccount, to_field='email',
+                                 related_name='vaults', db_column='email',
+                                 on_delete=models.CASCADE)
     password = models.CharField(max_length=128)
     description = models.TextField()
     access_level = models.ForeignKey(AccessLevel, to_field='access_level',
@@ -40,6 +44,7 @@ class Vault(BaseModel):
                                 related_name='vaults')
 
 
+# model to define component of a vault
 class Component(BaseModel):
     component_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
@@ -53,6 +58,7 @@ class Component(BaseModel):
                               related_name='components')
 
 
+# model to define item of a component
 class Item(BaseModel):
     item_id = models.AutoField(primary_key=True)
     key = models.CharField(max_length=45)
@@ -62,6 +68,7 @@ class Item(BaseModel):
                                   related_name='items')
 
 
+# model to define vault access for a user
 class VaultAccess(BaseModel):
     vault = models.ForeignKey(Vault, on_delete=models.CASCADE)
     employee = models.ForeignKey(EmployeeAccount, to_field='email',
@@ -69,6 +76,7 @@ class VaultAccess(BaseModel):
                                  on_delete=models.CASCADE)
 
 
+# model to define component access for a user
 class ComponentAccess(BaseModel):
     component = models.ForeignKey(Component, on_delete=models.CASCADE)
     employee = models.ForeignKey(EmployeeAccount, to_field='email',

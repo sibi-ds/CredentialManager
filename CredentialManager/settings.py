@@ -28,7 +28,6 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # Application definition
-
 INSTALLED_APPS = [
     'project.apps.ProjectConfig',
     'employee.apps.EmployeeConfig',
@@ -113,7 +112,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
@@ -135,48 +134,43 @@ REST_FRAMEWORK = {
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
-        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
-        # 'employee.authentication.EmployeeAuthentication',
     ],
-
-    # 'DEFAULT_PERMISSION_CLASSES': [
-    #     'rest_framework.permissions.IsAuthenticated',
-    # ]
 }
 
+# logging configurations
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
+
+        # to log in file
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': 'CredentialManager.log',
+            'formatter': 'overall',
         },
+
+        # to log in console
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
+            'formatter': 'overall',
         },
     },
     'loggers': {
         'credential-manager-logger': {
             'handlers': ['file', 'console'],
             'level': 'DEBUG',
-            'propagate': True,
         },
     },
+    'formatters': {
+        'overall': {
+            'format': '{levelname} {asctime} {message}',
+            'style': '{',
+        }
+    }
 }
 
+# custom auth user model
 AUTH_USER_MODEL = 'employee.EmployeeAccount'
-
-# REST_AUTH_TOKEN_MODEL = 'employee.models.EmployeeToken'
-
-# REST_AUTH_SERIALIZERS = {
-#     'USER_DETAILS_SERIALIZER':
-#         'employee.serializers.EmployeeAccountSerializer',
-# }
-
-# SIMPLE_JWT = {
-#     'REFRESH_TOKEN_LIFETIME': timedelta(seconds=10),
-#     'ROTATE_REFRESH_TOKENS': True,
-# }

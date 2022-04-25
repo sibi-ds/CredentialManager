@@ -1,3 +1,5 @@
+"""this module contains model for project details
+"""
 from django.db import models
 
 
