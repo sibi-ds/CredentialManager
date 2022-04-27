@@ -16,7 +16,7 @@ from credential.models import VaultAccess
 from credential.serializers import ComponentAccessSerializer
 from credential.serializers import VaultAccessSerializer
 
-from credential.utils.api_exceptions import CustomApiException
+from utils.api_exceptions import CustomApiException
 
 from employee.service import employee_service
 
@@ -30,20 +30,20 @@ def get_vault_access(vault_id, email):
     logger.info(f'Enter {__name__} module, {get_vault_access.__name__} method')
 
     try:
-        vault_access = VaultAccess.objects.get(vault=vault_id,
-                                               employee=email,
+        vault_access = VaultAccess.objects.get(vault__vault_id=vault_id,
+                                               employee__email=email,
                                                active=True)
         logger.info(f'Exit {__name__} module, '
                     f'{get_vault_access.__name__} method')
         return vault_access
-    except ObjectDoesNotExist:
+    except VaultAccess.DoesNotExist:
         logger.error('Vault Access for the given credentials does not exist')
         logger.error(f'Exit {__name__} module, '
                      f'{get_vault_access.__name__} method')
         return None
 
 
-def create_vault_access(vault_id, data):
+def create_vault_access(organization_id, vault_id, data):
     """used to create vault access for an employee
     """
     logger.info(f'Enter {__name__} module, '
@@ -52,9 +52,14 @@ def create_vault_access(vault_id, data):
     try:
         email = data.pop('email')
 
-        vault = Vault.objects.get(vault_id=vault_id, active=True)
+        vault = Vault.objects.get(
+            vault_id=vault_id, active=True,
+            organization__organization_id=organization_id,
+            organization__active=True
+        )
 
-        employee = employee_service.is_organization_employee(email)
+        employee = employee_service.is_organization_employee(organization_id,
+                                                             email)
 
         if employee is None:
             logger.error('Employee not belongs to the organization')

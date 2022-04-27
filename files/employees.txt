@@ -1,0 +1,4 @@
+name,email,password
+sibi,sibi@ideas2it.com,sibi
+dhinesh,dhinesh@ideas2it.com,dhinesh
+sasi,sasi@ideas2it.com,sasi

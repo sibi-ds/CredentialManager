@@ -29,6 +29,7 @@ ALLOWED_HOSTS = []
 
 # Application definition
 INSTALLED_APPS = [
+    'organization.apps.OrganizationConfig',
     'project.apps.ProjectConfig',
     'employee.apps.EmployeeConfig',
     'credential.apps.CredentialConfig',
@@ -132,9 +133,9 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER':
         'utils.api_exceptions.custom_exception_handler',
 
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-    ],
+    # 'DEFAULT_AUTHENTICATION_CLASSES': [
+    #     'rest_framework.authentication.TokenAuthentication',
+    # ],
 }
 
 # logging configurations
@@ -173,4 +174,4 @@ LOGGING = {
 }
 
 # custom auth user model
-AUTH_USER_MODEL = 'employee.EmployeeAccount'
+# AUTH_USER_MODEL = 'employee.EmployeeAccount'

@@ -6,8 +6,11 @@ from django.db import IntegrityError
 from django.http import HttpRequest
 
 from rest_framework.decorators import api_view
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from files import file_reader
+from organization.models import Organization
 from project.models import Project
 
 from project.serializers import ProjectSerializer
@@ -46,3 +49,34 @@ def create_project(request: HttpRequest):
         logger.error(f'Exit {__name__} module, '
                      f'{create_project.__name__} method')
         raise CustomApiException(400, 'Project email already exist')
+
+
+@api_view(['POST', ])
+def create_projects(request: HttpRequest, organization_id):
+    try:
+        email = request.data.get("email")
+
+        project_datas = file_reader.create_projects()
+
+        organization = Organization.objects.get(
+            organization_id=organization_id,
+            email=email, active=True
+        )
+
+        for employee in project_datas:
+            employee['organization'] = organization_id
+
+        project_list_serializer = ProjectSerializer(
+            data=project_datas, many=True
+        )
+
+        project_list_serializer.is_valid(raise_exception=True)
+        project_list_serializer.save()
+
+        return Response(project_list_serializer.data)
+    except ValidationError:
+        raise CustomApiException(400, 'Load valid details in the file')
+    except KeyError:
+        raise CustomApiException(400, 'Enter valid details')
+    except Organization.DoesNotExist:
+        raise CustomApiException(404, 'No such organization exist')

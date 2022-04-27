@@ -12,7 +12,6 @@ from credential.models import VaultAccess
 
 
 class AccessLevelSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = AccessLevel
         fields = '__all__'
@@ -26,7 +25,7 @@ class ItemSerializer(serializers.ModelSerializer):
         fields = ('item_id', 'key', 'active',
                   'created_at', 'created_by', 'updated_at', 'updated_by',
                   'value', 'component')
-        read_only_fields = ('component', )
+        read_only_fields = ('component',)
 
 
 class ComponentSerializer(serializers.ModelSerializer):
@@ -92,8 +91,9 @@ class VaultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vault
-        fields = ('vault_id', 'name', 'description', 'access_level', 'active',
-                  'created_at', 'created_by', 'updated_at', 'updated_by',
+        fields = ('vault_id', 'name', 'description', 'access_level',
+                  'active', 'created_at', 'created_by',
+                  'updated_at', 'updated_by', 'organization',
                   'project', 'employee', 'password', 'components')
 
     # override create method for hashing password of a vault
@@ -103,9 +103,13 @@ class VaultSerializer(serializers.ModelSerializer):
         access_level = validated_data.get('access_level')
         project = validated_data.get('project', None)
         employee = validated_data.get('employee')
+        organization = validated_data.get('organization')
+
         vault = Vault.objects.create(name=name, description=description,
-                                     access_level=access_level, active=True,
-                                     employee=employee, project=project)
+                                     access_level=access_level,
+                                     employee=employee, project=project,
+                                     organization=organization)
+
         vault.password = make_password(validated_data.get('password'))
         vault.save()
 

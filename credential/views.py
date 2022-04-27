@@ -12,20 +12,20 @@ from credential.service import component_service
 from credential.service import user_access_service
 from credential.service import vault_service
 
-from credential.utils.api_exceptions import CustomApiException
+from utils.api_exceptions import CustomApiException
 
 
 logger = logging.getLogger('credential-manager-logger')
 
 
 @api_view(['POST'])
-def create_vault(request: HttpRequest):
+def create_vault(request: HttpRequest, organization_id):
     """Used to create vault
     """
     logger.info(f'Enter {__name__} module, create_vault method')
 
     try:
-        vault = vault_service.create_vault(request.data)
+        vault = vault_service.create_vault(organization_id, request.data)
         logger.info(f'Exit {__name__} module, create_vault method')
         return Response(vault)
     except CustomApiException as e:
@@ -34,12 +34,13 @@ def create_vault(request: HttpRequest):
 
 
 @api_view(['GET', 'PUT', 'PATCH'])
-def do_vault(request: HttpRequest, vault_id):
+def do_vault(request: HttpRequest, organization_id, vault_id):
     logger.info(f'Enter {__name__} module, do_vault method')
 
     if request.method == 'GET':
         try:
-            vault = vault_service.get_vault(vault_id, request.data)
+            vault = vault_service.get_vault(organization_id, vault_id,
+                                            request.data)
             logger.info(f'Exit {__name__} module, do_vault method')
             return Response(vault)
         except CustomApiException as e:
@@ -48,7 +49,8 @@ def do_vault(request: HttpRequest, vault_id):
 
     if request.method == 'PUT':
         try:
-            vault = vault_service.update_vault(vault_id, request.data)
+            vault = vault_service.update_vault(organization_id, vault_id,
+                                               request.data)
             logger.info(f'Exit {__name__} module, do_vault method')
             return Response(vault)
         except CustomApiException as e:
@@ -67,11 +69,12 @@ def do_vault(request: HttpRequest, vault_id):
 
 
 @api_view(['POST'])
-def create_component(request: HttpRequest, vault_id):
+def create_component(request: HttpRequest, organization_id, vault_id):
     logger.info(f'Enter {__name__} module, create_component method')
 
     try:
-        component = component_service.create_component(vault_id, request.data)
+        component = component_service.create_component(organization_id,
+                                                       vault_id, request.data)
         logger.info(f'Exit {__name__} module, '
                     f'{create_component.__name__} method')
         return Response(component)
@@ -82,12 +85,13 @@ def create_component(request: HttpRequest, vault_id):
 
 
 @api_view(['GET', 'PUT', 'PATCH'])
-def do_component(request: HttpRequest, vault_id, component_id):
+def do_component(request: HttpRequest, organization_id, vault_id, component_id):
     logger.info(f'Enter {__name__} module, do_component method')
 
     if request.method == 'GET':
         try:
-            component = component_service.get_component(vault_id, component_id,
+            component = component_service.get_component(organization_id,
+                                                        vault_id, component_id,
                                                         request.data)
             logger.info(f'Exit {__name__} module,'
                         f'{do_component.__name__} method')
@@ -99,7 +103,8 @@ def do_component(request: HttpRequest, vault_id, component_id):
 
     if request.method == 'PUT':
         try:
-            component = component_service.update_component(vault_id,
+            component = component_service.update_component(organization_id,
+                                                           vault_id,
                                                            component_id,
                                                            request.data)
             logger.info(f'Exit {__name__} module, '
@@ -125,13 +130,13 @@ def do_component(request: HttpRequest, vault_id, component_id):
 
 
 @api_view(['POST', 'PUT', 'PATCH'])
-def do_vault_access(request: HttpRequest, vault_id):
+def do_vault_access(request: HttpRequest, organization_id, vault_id):
     logger.info(f'Enter {__name__} module, do_vault_access method')
 
     if request.method == 'POST':
         try:
             vault_access = user_access_service \
-                .create_vault_access(vault_id, request.data)
+                .create_vault_access(organization_id, vault_id, request.data)
             logger.info(f'Exit {__name__} module, '
                         f'{do_vault_access.__name__} method')
             return Response(vault_access)
@@ -154,7 +159,7 @@ def do_vault_access(request: HttpRequest, vault_id):
 
 
 @api_view(['POST', 'PUT', 'PATCH'])
-def do_component_access(request: HttpRequest, vault_id, component_id):
+def do_component_access(request: HttpRequest, organization_id, vault_id, component_id):
     logger.info(f'Enter {__name__} module, do_component_access method')
 
     if request.method == 'POST':
