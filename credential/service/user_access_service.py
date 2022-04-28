@@ -8,81 +8,130 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from credential.models import Component
-from credential.models import ComponentAccess
 from credential.models import Vault
 from credential.models import VaultAccess
 
-from credential.serializers import ComponentAccessSerializer
 from credential.serializers import VaultAccessSerializer
+from employee.models import Employee
+from project.models import Project
 
 from utils.api_exceptions import CustomApiException
 
 from employee.service import employee_service
 
-
 logger = logging.getLogger('credential-manager-logger')
 
 
-def get_vault_access(vault_id, email):
-    """used to get vault access for an employee
-    """
-    logger.info(f'Enter {__name__} module, {get_vault_access.__name__} method')
+def get_vault_accesses(organization_id, employee_id, vault_id, access_level):
+    vault_accesses = VaultAccess.objects.filter(
+        organization=organization_id, organization__active=True,
+        vault=vault_id, vault__active=True,
+        created_by___employee__employee_id=employee_id,
+        access_level=access_level,
+    )
 
+    return vault_accesses
+
+
+def get_admin_vault_access(organization_id, employee_id, vault_id):
     try:
-        vault_access = VaultAccess.objects.get(vault__vault_id=vault_id,
-                                               employee__email=email,
-                                               active=True)
-        logger.info(f'Exit {__name__} module, '
-                    f'{get_vault_access.__name__} method')
+        vault_access = VaultAccess.objects.get(
+            organization=organization_id, organization__active=True,
+            vault=vault_id, vault__active=True,
+            created_by=employee_id,
+            access_level=None
+        )
+
         return vault_access
     except VaultAccess.DoesNotExist:
-        logger.error('Vault Access for the given credentials does not exist')
-        logger.error(f'Exit {__name__} module, '
-                     f'{get_vault_access.__name__} method')
         return None
 
 
-def create_vault_access(organization_id, vault_id, data):
+def get_organization_vault_accesses(organization_id, vault_id):
+    vault_accesses = VaultAccess.objects.filter(
+        organization=organization_id, organization__active=True,
+        vault=vault_id, vault__active=True,
+        access_level='ORGANIZATION',
+    )
+
+    return vault_accesses
+
+
+def get_project_vault_accesses(organization_id, vault_id,
+                               projects):
+    project_ids = [project.project_id for project in projects]
+
+    vault_access = VaultAccess.objects.filter(
+        organization=organization_id, organization__active=True,
+        vault=vault_id, vault__active=True,
+        access_level='PROJECT',
+        project__project_id__in=project_ids,
+    )
+    print(vault_access)
+
+    return vault_access
+
+
+def get_individual_vault_accesses(organization_id, employee_id, vault_id):
+    vault_access = VaultAccess.objects.filter(
+        organization=organization_id, organization__active=True,
+        vault=vault_id, vault__active=True,
+        employee__employee_id=employee_id,
+        access_level='INDIVIDUAL',
+    )
+
+    return vault_access
+
+
+def create_vault_access(organization_id, uid, vault_id, data):
     """used to create vault access for an employee
     """
     logger.info(f'Enter {__name__} module, '
                 f'{create_vault_access.__name__} method')
 
     try:
-        email = data.pop('email')
+        creating_employee = Employee.objects.get(
+            employee_uid=uid, active=True,
+            organization=organization_id, organization__active=True,
+        )
 
         vault = Vault.objects.get(
             vault_id=vault_id, active=True,
-            organization__organization_id=organization_id,
-            organization__active=True
+            organization=organization_id, organization__active=True,
         )
 
-        employee = employee_service.is_organization_employee(organization_id,
-                                                             email)
+        if creating_employee.employee_id != vault.created_by.employee_id:
+            raise CustomApiException(400, 'Only vault owner can give access')
 
-        if employee is None:
-            logger.error('Employee not belongs to the organization')
-            logger.error(f'Exit {__name__} module, '
-                         f'{create_vault_access.__name__} method')
-            raise CustomApiException(500, 'This user is not belong '
-                                          'to the organization')
+        access_level = data.pop('access_level')
 
-        data['vault'] = vault_id
-        data['employee'] = email
+        vault_access = None
 
-        vault_access = get_vault_access(vault_id, email)
+        if access_level == 'ORGANIZATION':
+            vault_access = create_organization_vault_access(organization_id,
+                                                            creating_employee,
+                                                            vault_id)
+        elif access_level == 'PROJECT':
+            project_id = data.pop('project')
 
-        if vault_access is not None:
-            logger.error('Vault access already given')
-            logger.error(f'Exit {__name__} module, '
-                         f'{create_vault_access.__name__} method')
-            raise CustomApiException(500, 'Vault access already given '
-                                          'for the employee')
+            project = Project.objects.get(
+                project_id=project_id,active=True,
+                organization__organization_id=organization_id,
+                organization__active=True
+            )
 
-        vault_access_serializer = VaultAccessSerializer(data=data)
-        vault_access_serializer.is_valid(raise_exception=True)
-        vault_access_serializer.save()
+            vault_access = create_project_vault_access(organization_id,
+                                                       creating_employee,
+                                                       project, vault_id)
+        elif access_level == 'INDIVIDUAL':
+            email = data.pop('employee')
+
+            vault_access = create_individual_vault_access(organization_id,
+                                                          creating_employee,
+                                                          email, vault_id)
+
+        vault_access_serializer = VaultAccessSerializer(data=vault_access)
+        vault_access_serializer.is_valid()
 
         logger.info(f'Exit {__name__} module, '
                     f'{create_vault_access.__name__} method')
@@ -98,6 +147,60 @@ def create_vault_access(organization_id, vault_id, data):
         logger.error(f'Exit {__name__} module, '
                      f'{create_vault_access.__name__} method')
         raise CustomApiException(404, 'No such vault exist')
+    except Employee.DoesNotExist:
+        logger.error(f'Employee for Employee UID : {uid} does not exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{create_vault_access.__name__} method')
+        raise CustomApiException(404, 'No such employee exist')
+    except Project.DoesNotExist:
+        logger.error(f'Project for Project ID : {project_id} does not exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{create_vault_access.__name__} method')
+        raise CustomApiException(404, 'No such project exist')
+
+
+def create_individual_vault_access(organization_id, creating_employee, email,
+                                   vault_id):
+    employee = Employee.objects.get(
+        email=email, active=True,
+        organization__organization_id=organization_id,
+        organization__active=True
+    )
+
+    vault_access = VaultAccess.objects.create(
+        employee=employee,
+        organization_id=organization_id,
+        vault_id=vault_id,
+        access_level='INDIVIDUAL',
+        created_by=creating_employee,
+    )
+
+    return vault_access
+
+
+def create_project_vault_access(organization_id, creating_employee, project,
+                                vault_id):
+    vault_access = VaultAccess.objects.create(
+        organization_id=organization_id,
+        vault_id=vault_id,
+        access_level='PROJECT',
+        created_by=creating_employee,
+        project=project
+    )
+
+    return vault_access
+
+
+def create_organization_vault_access(organization_id, creating_employee,
+                                     vault_id):
+    vault_access = VaultAccess.objects.create(
+        organization_id=organization_id,
+        vault_id=vault_id,
+        access_level='ORGANIZATION',
+        created_by=creating_employee
+    )
+
+    return vault_access
 
 
 def remove_vault_access(vault_id, data):
@@ -139,129 +242,3 @@ def remove_vault_access(vault_id, data):
         logger.error(f'Exit {__name__} module, '
                      f'{remove_vault_access.__name__} method')
         return CustomApiException(500, 'Enter valid details')
-
-
-def get_component_access(component_id, email):
-    """used to get component access of an employee
-    """
-    logger.info(f'Enter {__name__} module, '
-                f'{get_component_access.__name__} method')
-
-    try:
-        component = ComponentAccess.objects.get(component_id=component_id,
-                                                employee=email,
-                                                active=True)
-
-        logger.info(f'Exit {__name__} module, '
-                    f'{get_component_access.__name__} method')
-
-        return component
-    except ObjectDoesNotExist:
-        logger.error('The given email address is not given access')
-        logger.error(f'Exit {__name__} module, '
-                     f'{get_component_access.__name__} method')
-        return None
-
-
-def create_component_access(vault_id, component_id, data):
-    """used to create component access of an employee
-    """
-    logger.info(f'Enter {__name__} module, '
-                f'{create_component_access.__name__} method')
-
-    try:
-        email = data.pop('email')
-
-        vault = Vault.objects.get(vault_id=vault_id, active=True)
-
-        component = Component.objects.get(vault_id=vault_id,
-                                          component_id=component_id,
-                                          active=True)
-
-        employee = employee_service.is_organization_employee(email)
-
-        if employee is None:
-            logger.error('The given email address is not belong '
-                         'to the organization')
-            logger.error(f'Exit {__name__} module, '
-                         f'{create_component_access.__name__} method')
-            raise CustomApiException(400, 'This user is not belong '
-                                          'to the organization')
-
-        data['employee'] = email
-        data['component'] = component_id
-
-        component_access = get_component_access(component_id, email)
-
-        if component_access is not None:
-            logger.error('Component access already given')
-            logger.error(f'Exit {__name__} module, '
-                         f'{create_component_access.__name__} method')
-            raise CustomApiException(400, 'Component access already given'
-                                          'for the employee')
-
-        component_access_serializer = ComponentAccessSerializer(data=data)
-        component_access_serializer.is_valid(raise_exception=True)
-        component_access_serializer.save()
-
-        logger.info(f'Exit {__name__} module, '
-                    f'{create_component_access.__name__} method')
-
-        return component_access_serializer.data
-    except Vault.DoesNotExist:
-        logger.error('The entered credentials can\'t create component access')
-        logger.error(f'Exit {__name__} module, '
-                     f'{create_component_access.__name__} method')
-        raise CustomApiException(404, 'You don\'t have access '
-                                      'to create component access')
-    except Component.DoesNotExist:
-        logger.error(f'Component for Component ID : {component_id}'
-                     f'is not exist')
-        logger.error(f'Exit {__name__} module, '
-                     f'{create_component_access.__name__} method')
-        raise CustomApiException(404, 'Component does not exist')
-    except (ValidationError, KeyError):
-        logger.error('Entered details are not valid')
-        logger.error(f'Exit {__name__} module, '
-                     f'{create_component_access.__name__} method')
-        raise CustomApiException(500, 'Enter valid details')
-
-
-def remove_component_access(component_id, data):
-    """used to remove component access of the employee
-    """
-    logger.info(f'Enter {__name__} module, '
-                f'{remove_component_access.__name__} method')
-
-    try:
-        email = data.get('email')
-
-        component_access = ComponentAccess.objects.get(
-            employee=email,
-            component=component_id,
-            active=True
-        )
-
-        component_access_serializer = ComponentAccessSerializer(
-            component_access, data=data, partial=True
-        )
-
-        component_access_serializer.is_valid(raise_exception=True)
-        component_access_serializer.save()
-
-        logger.info('The vault access status changed successfully')
-        logger.info(f'Exit {__name__} module, '
-                    f'{remove_component_access.__name__} method')
-
-        return Response('The access for ' + email
-                        + ' is changed successfully')
-    except ObjectDoesNotExist:
-        logger.error('No component access was provided for the given details')
-        logger.error(f'Exit {__name__} module, '
-                     f'{remove_component_access.__name__} method')
-        return Response('No such component access exist')
-    except (ValidationError, KeyError):
-        logger.error('Entered details are not valid')
-        logger.error(f'Exit {__name__} module, '
-                     f'{remove_component_access.__name__} method')
-        raise CustomApiException(500, 'Enter valid details')

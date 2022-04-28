@@ -1,7 +1,8 @@
 """this module contains employee models
 """
-from django.contrib.auth.base_user import AbstractBaseUser
-from django.contrib.auth.models import PermissionsMixin, AbstractUser
+# from django.contrib.auth.base_user import AbstractBaseUser
+# from django.contrib.auth.models import PermissionsMixin
+import uuid
 
 from django.db import models
 
@@ -42,6 +43,8 @@ class BaseModel(models.Model):
 
 class Employee(BaseModel):
     employee_id = models.AutoField(primary_key=True)
+    employee_uid = models.UUIDField(default=uuid.uuid4, editable=False,
+                                    unique=True)
     name = models.CharField(max_length=45, null=False)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
@@ -50,6 +53,7 @@ class Employee(BaseModel):
                                      related_name='employees',
                                      db_column='organization_id',
                                      on_delete=models.CASCADE)
+
     projects = models.ManyToManyField(Project,
                                       related_name='employees',
                                       blank=True)

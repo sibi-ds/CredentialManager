@@ -10,6 +10,7 @@ from credential.models import Component
 from credential.models import Vault
 
 from credential.serializers import ComponentSerializer
+from employee.models import Employee
 
 from employee.service import employee_service
 from credential.service import user_access_service, vault_service
@@ -21,7 +22,7 @@ from utils.api_exceptions import CustomApiException
 logger = logging.getLogger('credential-manager-logger')
 
 
-def create_component(organization_id, vault_id, data):
+def create_component(organization_id, uid, vault_id, data):
     """used to create component for a vault
     """
     logger.info(f'Enter {__name__} module, {create_component.__name__} method')
@@ -34,15 +35,25 @@ def create_component(organization_id, vault_id, data):
         vault = Vault.objects.get(
             vault_id=vault_id, active=True,
             organization__organization_id=organization_id,
+            organization__active=True,
+        )
+
+        employee = Employee.objects.get(
+            employee_uid=uid, active=True,
+            organization__organization_id=organization_id,
+            organization__active=True
         )
 
         data['vault'] = vault_id
-        data['access_level'] = vault.access_level.access_level_id
+        data['organization'] = organization_id
+        data['created_by'] = employee.employee_id
 
-        component_serializer = ComponentSerializer(data=data)
+        component_serializer = ComponentSerializer(data=data, partial=True)
+
         component_serializer.is_valid(raise_exception=False)
         print(component_serializer.errors)
         component_serializer.save()
+
         logger.info(f'Exit {__name__} module, '
                     f'{create_component.__name__} method')
 
@@ -74,10 +85,10 @@ def get_component(organization_id, vault_id, component_id, data):
         email = data.get('email')
         password = data.get('password')
 
-        # organization = Organization.objects.get(
-        #     organization_id=organization_id,
-        #     active=True
-        # )
+        organization = Organization.objects.get(
+            organization_id=organization_id,
+            active=True
+        )
 
         vault = Vault.objects.get(
             vault_id=vault_id, active=True,

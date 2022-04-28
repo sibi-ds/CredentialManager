@@ -2,6 +2,8 @@
 """
 from django.db import models
 
+from organization.models import Organization
+
 
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
@@ -19,3 +21,8 @@ class Project(BaseModel):
     name = models.CharField(max_length=45)
     email = models.EmailField(max_length=45, unique=True)
     description = models.TextField()
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE,
+                                     to_field='organization_id',
+                                     db_column='organization_id',
+                                     related_name='projects')

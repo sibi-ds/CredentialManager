@@ -11,6 +11,7 @@ from rest_framework.response import Response
 
 from files import file_reader
 from organization.models import Organization
+from organization.views import is_valid_user
 from project.models import Project
 
 from project.serializers import ProjectSerializer
@@ -52,15 +53,18 @@ def create_project(request: HttpRequest):
 
 
 @api_view(['POST', ])
-def create_projects(request: HttpRequest, organization_id):
+def create_projects(request: HttpRequest):
     try:
         email = request.data.get("email")
+        password = request.data.get('password')
 
         project_datas = file_reader.create_projects()
 
+        organization_id = request.query_params.get('organization_id')
+
         organization = Organization.objects.get(
             organization_id=organization_id,
-            email=email, active=True
+            active=True
         )
 
         for employee in project_datas:

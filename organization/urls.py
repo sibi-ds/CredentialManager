@@ -6,7 +6,7 @@ urlpatterns = [
     path('', views.create_organization, name='create_organization'),
     path('<int:organization_id>', views.do_organization,
          name='do_organization'),
-    path('<int:organization_id>/vaults/', include('credential.urls')),
-    path('<int:organization_id>/employees/', include('employee.urls')),
-    path('<int:organization_id>/projects/', include('project.urls')),
+    # path('users/<uuid:uid>/vaults/', include('credential.urls')),
+    # path('employees/', include('employee.urls')),
+    # path('projects/', include('project.urls')),
 ]

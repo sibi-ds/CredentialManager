@@ -3,18 +3,10 @@
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
-from credential.models import AccessLevel
 from credential.models import Component
-from credential.models import ComponentAccess
 from credential.models import Item
 from credential.models import Vault
 from credential.models import VaultAccess
-
-
-class AccessLevelSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AccessLevel
-        fields = '__all__'
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -22,9 +14,9 @@ class ItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Item
-        fields = ('item_id', 'key', 'active',
-                  'created_at', 'created_by', 'updated_at', 'updated_by',
-                  'value', 'component')
+        fields = ('item_id', 'key', 'value', 'active',
+                  'component', 'organization',
+                  'created_at', 'created_by', 'updated_at', 'updated_by')
         read_only_fields = ('component',)
 
 
@@ -33,17 +25,20 @@ class ComponentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Component
-        fields = ('component_id', 'name', 'description', 'access_level',
-                  'active', 'created_at', 'created_by', 'updated_at',
-                  'updated_by', 'vault', 'items')
+        fields = ('component_id', 'name', 'description', 'active',
+                  'organization', 'vault', 'items',
+                  'created_at', 'created_by', 'updated_at', 'updated_by')
 
     # override create method for nested objects creation
     def create(self, validated_data):
         items = validated_data.pop('items')
+
         component = Component.objects.create(**validated_data)
 
         for item in items:
-            Item.objects.create(component=component, **item)
+            Item.objects.create(component=component, **item,
+                                created_by=component.created_by,
+                                organization=component.organization)
 
         return component
 
@@ -80,38 +75,39 @@ class ComponentSerializer(serializers.ModelSerializer):
 class ComponentOnlySerializer(serializers.ModelSerializer):
     class Meta:
         model = Component
-        fields = ('component_id', 'name', 'description', 'access_level',
-                  'active', 'created_at', 'created_by', 'updated_at',
-                  'updated_by')
+        fields = ('component_id', 'name', 'description',
+                  'vault', 'organization', 'active',
+                  'created_at', 'created_by', 'updated_at', 'updated_by')
 
 
 class VaultSerializer(serializers.ModelSerializer):
     components = ComponentOnlySerializer(many=True, read_only=True)
-    password = serializers.CharField(write_only=True)
 
     class Meta:
         model = Vault
-        fields = ('vault_id', 'name', 'description', 'access_level',
-                  'active', 'created_at', 'created_by',
-                  'updated_at', 'updated_by', 'organization',
-                  'project', 'employee', 'password', 'components')
+        fields = ('vault_id', 'name', 'description',
+                  'organization', 'components', 'active',
+                  'created_at', 'created_by', 'updated_at', 'updated_by')
 
     # override create method for hashing password of a vault
     def create(self, validated_data):
         name = validated_data.get('name')
         description = validated_data.get('description')
-        access_level = validated_data.get('access_level')
-        project = validated_data.get('project', None)
-        employee = validated_data.get('employee')
         organization = validated_data.get('organization')
+        created_by = validated_data.get('created_by')
 
         vault = Vault.objects.create(name=name, description=description,
-                                     access_level=access_level,
-                                     employee=employee, project=project,
-                                     organization=organization)
+                                     organization=organization,
+                                     created_by=created_by)
 
         vault.password = make_password(validated_data.get('password'))
         vault.save()
+
+        vault_access = VaultAccess.objects.create(
+            vault=vault,
+            organization=organization,
+            created_by=vault.created_by
+        )
 
         return vault
 
@@ -120,10 +116,8 @@ class VaultSerializer(serializers.ModelSerializer):
         instance.name = validated_data.get('name', instance.name)
         instance.description = validated_data.get('description',
                                                   instance.description)
-        instance.access_level = validated_data.get('access_level',
-                                                   instance.access_level)
-        instance.project = validated_data.get('project', instance.project)
         instance.active = validated_data.get('active', instance.active)
+        updated_by = validated_data.get('updated_by')
         instance.save()
         return instance
 
@@ -131,18 +125,6 @@ class VaultSerializer(serializers.ModelSerializer):
 class VaultAccessSerializer(serializers.ModelSerializer):
     class Meta:
         model = VaultAccess
-        fields = '__all__'
-
-    # override update method for partial update
-    def update(self, instance, validated_data):
-        instance.active = validated_data.get('active', instance.active)
-        instance.save()
-        return instance
-
-
-class ComponentAccessSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ComponentAccess
         fields = '__all__'
 
     # override update method for partial update

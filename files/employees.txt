@@ -1,4 +1,7 @@
 name,email,password
+admin,admin@ideas2it.com,admin
 sibi,sibi@ideas2it.com,sibi
 dhinesh,dhinesh@ideas2it.com,dhinesh
 sasi,sasi@ideas2it.com,sasi
+sembiyan,sembiyan@ideas2it.com,sembiyan
+velu,velu@ideas2it.com,velu

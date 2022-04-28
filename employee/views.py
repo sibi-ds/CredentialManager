@@ -29,6 +29,7 @@ from employee.serializers import EmployeeSerializer
 
 from files import file_reader
 from organization.models import Organization
+from organization.views import is_valid_user
 
 from utils.api_exceptions import CustomApiException
 
@@ -121,15 +122,18 @@ logger = logging.getLogger('credential-manager-logger')
 
 
 @api_view(['POST', ])
-def create_employees(request: HttpRequest, organization_id):
+def create_employees(request: HttpRequest):
     try:
         email = request.data.get("email")
+        password = request.data.get('password')
 
         employee_datas = file_reader.create_employees()
 
+        organization_id = request.query_params.get('organization_id')
+
         organization = Organization.objects.get(
             organization_id=organization_id,
-            email=email, active=True
+            active=True
         )
 
         for employee in employee_datas:

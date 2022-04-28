@@ -19,13 +19,14 @@ logger = logging.getLogger('credential-manager-logger')
 
 
 @api_view(['POST'])
-def create_vault(request: HttpRequest, organization_id):
+def create_vault(request: HttpRequest, uid):
     """Used to create vault
     """
     logger.info(f'Enter {__name__} module, create_vault method')
 
     try:
-        vault = vault_service.create_vault(organization_id, request.data)
+        organization_id = request.query_params.get('organization_id')
+        vault = vault_service.create_vault(organization_id, uid, request.data)
         logger.info(f'Exit {__name__} module, create_vault method')
         return Response(vault)
     except CustomApiException as e:
@@ -34,12 +35,14 @@ def create_vault(request: HttpRequest, organization_id):
 
 
 @api_view(['GET', 'PUT', 'PATCH'])
-def do_vault(request: HttpRequest, organization_id, vault_id):
+def do_vault(request: HttpRequest, uid, vault_id):
     logger.info(f'Enter {__name__} module, do_vault method')
+
+    organization_id = request.query_params.get('organization_id')
 
     if request.method == 'GET':
         try:
-            vault = vault_service.get_vault(organization_id, vault_id,
+            vault = vault_service.get_vault(organization_id, uid, vault_id,
                                             request.data)
             logger.info(f'Exit {__name__} module, do_vault method')
             return Response(vault)
@@ -69,11 +72,12 @@ def do_vault(request: HttpRequest, organization_id, vault_id):
 
 
 @api_view(['POST'])
-def create_component(request: HttpRequest, organization_id, vault_id):
+def create_component(request: HttpRequest, uid, vault_id):
     logger.info(f'Enter {__name__} module, create_component method')
 
     try:
-        component = component_service.create_component(organization_id,
+        organization_id = request.query_params.get('organization_id')
+        component = component_service.create_component(organization_id, uid,
                                                        vault_id, request.data)
         logger.info(f'Exit {__name__} module, '
                     f'{create_component.__name__} method')
@@ -85,8 +89,10 @@ def create_component(request: HttpRequest, organization_id, vault_id):
 
 
 @api_view(['GET', 'PUT', 'PATCH'])
-def do_component(request: HttpRequest, organization_id, vault_id, component_id):
+def do_component(request: HttpRequest, uid, vault_id, component_id):
     logger.info(f'Enter {__name__} module, do_component method')
+
+    organization_id = request.query_params.get('organization_id')
 
     if request.method == 'GET':
         try:
@@ -130,13 +136,17 @@ def do_component(request: HttpRequest, organization_id, vault_id, component_id):
 
 
 @api_view(['POST', 'PUT', 'PATCH'])
-def do_vault_access(request: HttpRequest, organization_id, vault_id):
+def do_vault_access(request: HttpRequest, uid, vault_id):
     logger.info(f'Enter {__name__} module, do_vault_access method')
+
+    organization_id = request.query_params.get('organization_id')
 
     if request.method == 'POST':
         try:
-            vault_access = user_access_service \
-                .create_vault_access(organization_id, vault_id, request.data)
+            vault_access = user_access_service.create_vault_access(
+                organization_id, uid, vault_id, request.data
+            )
+
             logger.info(f'Exit {__name__} module, '
                         f'{do_vault_access.__name__} method')
             return Response(vault_access)
@@ -155,33 +165,4 @@ def do_vault_access(request: HttpRequest, organization_id, vault_id):
         except CustomApiException as e:
             logger.error(f'Exit {__name__} module, '
                          f'{do_vault_access.__name__} method')
-            raise CustomApiException(e.status_code, e.detail)
-
-
-@api_view(['POST', 'PUT', 'PATCH'])
-def do_component_access(request: HttpRequest, organization_id, vault_id, component_id):
-    logger.info(f'Enter {__name__} module, do_component_access method')
-
-    if request.method == 'POST':
-        try:
-            component_access = user_access_service.create_component_access(
-                vault_id, component_id, request.data)
-            logger.info(f'Exit {__name__} module, '
-                        f'{do_component_access.__name__} method')
-            return Response(component_access)
-        except CustomApiException as e:
-            logger.error(f'Exit {__name__} module, '
-                         f'{do_component_access.__name__} method')
-            raise CustomApiException(e.status_code, e.detail)
-
-    if request.method == 'PATCH':
-        try:
-            active_status_update_message = user_access_service \
-                .remove_component_access(component_id, request.data)
-            logger.info(f'Exit {__name__} module, '
-                        f'{do_component_access.__name__} method')
-            return active_status_update_message
-        except CustomApiException as e:
-            logger.error(f'Exit {__name__} module, '
-                         f'{do_component_access.__name__} method')
             raise CustomApiException(e.status_code, e.detail)

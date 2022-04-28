@@ -30,7 +30,8 @@ from employee.models import Employee
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['employee_id', 'name', 'email', 'organization', 'active',
+        fields = ['employee_id', 'employee_uid', 'name', 'email',
+                  'organization', 'active',
                   'created_at', 'created_by', 'updated_at', 'updated_by', ]
 
     # override create method for hashing password of an employee

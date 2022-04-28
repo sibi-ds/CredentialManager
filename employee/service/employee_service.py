@@ -9,9 +9,9 @@ from utils.api_exceptions import CustomApiException
 logger = logging.getLogger('credential-manager-logger')
 
 
-def is_organization_employee(organization_id, email):
+def get_organization_employee(organization_id, email):
     logger.info(f'Enter {__name__} module, '
-                f'{is_organization_employee.__name__} method')
+                f'{get_organization_employee.__name__} method')
 
     try:
         employee = Employee.objects.get(
@@ -21,13 +21,13 @@ def is_organization_employee(organization_id, email):
         )
 
         logger.info(f'Exit {__name__} module, '
-                    f'{is_organization_employee.__name__} method')
+                    f'{get_organization_employee.__name__} method')
         return employee
     except Employee.DoesNotExist:
         logger.error('The given email address is not belong '
                      'to the organization')
         logger.error(f'Exit {__name__} module, '
-                     f'{is_organization_employee.__name__} method')
+                     f'{get_organization_employee.__name__} method')
         return None
 
 

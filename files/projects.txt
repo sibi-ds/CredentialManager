@@ -1,4 +1,4 @@
 name,email,description
+Lateral Training,lateraltraining@ideas2it.com,lateral training
 Grape Fruit,grapefruit@ideas2it.com,grape fruit
 Ulab Systems,ulabsystems@ideas2it.com,ulab systems
-Lateral Training,lateraltraining@ideas2it.com,lateral training
