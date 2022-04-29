@@ -46,10 +46,9 @@ class ComponentSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
         instance.active = validated_data.get('active', instance.active)
-        instance.access_level = validated_data.get('access_level',
-                                                   instance.access_level)
         instance.description = validated_data.get('description',
                                                   instance.description)
+        instance.updated_by = instance.created_by
 
         instance.save()
 
@@ -65,9 +64,13 @@ class ComponentSerializer(serializers.ModelSerializer):
                 component_item.value = item.get('value', component_item.value)
                 component_item.active = \
                     item.get('active', component_item.active)
+                component_item.updated_by = component_item.created_by
+                component_item.organization = item \
+                    .get('organization', component_item.organization)
                 component_item.save()
             else:
-                Item.objects.create(component=instance, **item)
+                Item.objects.create(component=instance, **item,
+                                    created_by=instance.created_by)
 
         return instance
 
@@ -106,7 +109,8 @@ class VaultSerializer(serializers.ModelSerializer):
         vault_access = VaultAccess.objects.create(
             vault=vault,
             organization=organization,
-            created_by=vault.created_by
+            created_by=vault.created_by,
+            scope='READ/WRITE'
         )
 
         return vault
@@ -117,8 +121,9 @@ class VaultSerializer(serializers.ModelSerializer):
         instance.description = validated_data.get('description',
                                                   instance.description)
         instance.active = validated_data.get('active', instance.active)
-        updated_by = validated_data.get('updated_by')
+        instance.updated_by = validated_data.get('created_by')
         instance.save()
+
         return instance
 
 
@@ -129,6 +134,9 @@ class VaultAccessSerializer(serializers.ModelSerializer):
 
     # override update method for partial update
     def update(self, instance, validated_data):
+        instance.scope = validated_data.get('scope', instance.scope)
+        instance.access_level = validated_data.get('access_level',
+                                                   instance.access_level)
         instance.active = validated_data.get('active', instance.active)
         instance.save()
         return instance

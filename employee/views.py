@@ -2,38 +2,62 @@
 """
 import logging
 
-from django.contrib.auth import authenticate
 from django.http import HttpRequest
-from django.views.decorators.csrf import csrf_exempt
 
-from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import (
-    HTTP_400_BAD_REQUEST,
-    HTTP_404_NOT_FOUND,
-    HTTP_200_OK
-)
 
-from datetime import timedelta
-
-from django.utils import timezone
-
-# from employee.models import EmployeeAccount
-# from employee.serializers import EmployeeAccountSerializer
-
-from employee.models import Employee
 from employee.serializers import EmployeeSerializer
 
 from files import file_reader
 from organization.models import Organization
-from organization.views import is_valid_user
 
 from utils.api_exceptions import CustomApiException
 
+
 logger = logging.getLogger('credential-manager-logger')
+
+
+@api_view(['POST', ])
+def create_employees(request: HttpRequest):
+    try:
+        logger.debug(f'Enter {__name__} module, create_employees method')
+
+        employee_datas = file_reader.create_employees()
+
+        organization_id = request.query_params.get('organization_id')
+
+        organization = Organization.objects.get(
+            organization_id=organization_id,
+            active=True
+        )
+
+        for employee in employee_datas:
+            employee['organization'] = organization.organization_id
+
+        employee_list_serializer = EmployeeSerializer(
+            data=employee_datas, many=True
+        )
+
+        employee_list_serializer.is_valid(raise_exception=True)
+        employee_list_serializer.save()
+
+        logger.debug('Employees creation successful')
+
+        return Response(employee_list_serializer.data)
+    except ValidationError:
+        logger.error('Enter valid details.Employees creation failure')
+        logger.error(f'Exit {__name__} module, create_employees method')
+        raise CustomApiException(400, 'Load valid details in the file')
+    except KeyError:
+        logger.error('Enter valid details.Employees creation failure')
+        logger.error(f'Exit {__name__} module, create_employees method')
+        raise CustomApiException(400, 'Enter valid details')
+    except Organization.DoesNotExist:
+        logger.error('Organization not exist.Employees creation failure')
+        logger.error(f'Exit {__name__} module, create_employees method')
+        raise CustomApiException(404, 'No such organization exist')
 
 
 # @csrf_exempt
@@ -119,37 +143,3 @@ logger = logging.getLogger('credential-manager-logger')
 #         token.delete()
 #         token = Token.objects.create(user=token.user)
 #     return is_expired, token
-
-
-@api_view(['POST', ])
-def create_employees(request: HttpRequest):
-    try:
-        email = request.data.get("email")
-        password = request.data.get('password')
-
-        employee_datas = file_reader.create_employees()
-
-        organization_id = request.query_params.get('organization_id')
-
-        organization = Organization.objects.get(
-            organization_id=organization_id,
-            active=True
-        )
-
-        for employee in employee_datas:
-            employee['organization'] = organization_id
-
-        employee_list_serializer = EmployeeSerializer(
-            data=employee_datas, many=True
-        )
-
-        employee_list_serializer.is_valid(raise_exception=True)
-        employee_list_serializer.save()
-
-        return Response(employee_list_serializer.data)
-    except ValidationError:
-        raise CustomApiException(400, 'Load valid details in the file')
-    except KeyError:
-        raise CustomApiException(400, 'Enter valid details')
-    except Organization.DoesNotExist:
-        raise CustomApiException(404, 'No such organization exist')

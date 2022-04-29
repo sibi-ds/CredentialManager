@@ -1,10 +1,7 @@
 import logging
 
-from django.core.exceptions import ObjectDoesNotExist
-
-# from credential.models import EmployeeAccount
 from credential.models import Employee
-from utils.api_exceptions import CustomApiException
+
 
 logger = logging.getLogger('credential-manager-logger')
 

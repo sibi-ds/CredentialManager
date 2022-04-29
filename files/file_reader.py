@@ -1,14 +1,20 @@
+"""this module used to create employees and projects
+using csv files
+"""
 import csv
+import logging
+
 from pathlib import Path
 
 from CredentialManager import settings
-# from employee.models import EmployeeAccount
-from employee.models import Employee
-from project.models import Project
+
+
+logger = logging.getLogger('credential-manager-logger')
 
 
 def create_employees():
-    print(Path(str(settings.BASE_DIR) + '\\files\\' + 'employees.txt'))
+    logger.debug(f'Enter {__name__} module, create_employees method')
+
     employees = list()
 
     with open(Path(str(settings.BASE_DIR) + '\\files\\' + 'employees.txt')) \
@@ -27,10 +33,14 @@ def create_employees():
                 employees.append(employee)
                 line_count += 1
 
+    logger.debug(f'Exit {__name__} module, create_employees method')
+
     return employees
 
 
 def create_projects():
+    logger.debug(f'Enter {__name__} module, create_projects method')
+
     projects = list()
 
     with open(Path(str(settings.BASE_DIR) + '\\files\\' + 'projects.txt')) \
@@ -47,5 +57,7 @@ def create_projects():
                                description=row[2])
                 projects.append(project)
                 line_count += 1
+
+    logger.debug(f'Enter {__name__} module, create_projects method')
 
     return projects

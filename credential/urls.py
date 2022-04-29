@@ -10,6 +10,8 @@ urlpatterns = [
          name='create_component'),
     path('<int:vault_id>/components/<int:component_id>',
          views.do_component, name='do_component'),
-    path('<int:vault_id>/accesses', views.do_vault_access,
+    path('<int:vault_id>/accesses', views.create_vault_access,
+         name='create_vault_access'),
+    path('<int:vault_id>/accesses/<int:vault_access_id>', views.do_vault_access,
          name='do_vault_access'),
 ]

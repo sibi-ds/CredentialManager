@@ -98,6 +98,8 @@ class Item(BaseModel):
 
 # model to define vault access for a user
 class VaultAccess(BaseModel):
+    vault_access_id = models.AutoField(primary_key=True)
+
     access_levels = (
         ("INDIVIDUAL", "INDIVIDUAL"),
         ("PROJECT", "PROJECT"),
@@ -114,7 +116,7 @@ class VaultAccess(BaseModel):
     )
 
     scope = models.CharField(choices=scopes,
-                             default='READ/WRITE',
+                             default='READ',
                              max_length=20)
 
     vault = models.ForeignKey(Vault, on_delete=models.CASCADE)

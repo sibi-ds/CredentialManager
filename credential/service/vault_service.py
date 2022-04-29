@@ -2,22 +2,17 @@
 """
 import logging
 
-from django.contrib.auth.hashers import make_password, PBKDF2PasswordHasher, \
-    check_password
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
-from credential.models import Vault, VaultAccess
+from credential.models import Vault
 
 from credential.serializers import VaultSerializer
 
 from rest_framework.exceptions import ValidationError
 
 from employee.models import Employee
-from employee.service import employee_service
 from credential.service import user_access_service
 from organization.models import Organization
-from project.models import Project
 
 from utils.api_exceptions import CustomApiException
 
@@ -38,7 +33,7 @@ def create_vault(organization_id, uid, data):
 
         employee = Employee.objects.get(
             employee_uid=uid, active=True,
-            organization__organization_id=organization_id,
+            organization=organization,
             organization__active=True
         )
 
@@ -51,6 +46,7 @@ def create_vault(organization_id, uid, data):
 
         logger.info('Vault creation successful')
         logger.info(f'Exit {__name__} module, {create_vault.__name__} method')
+
         return vault_serializer.data
     except (ValidationError, KeyError):
         logger.error('Vault creation failure. Enter valid details')
@@ -60,24 +56,30 @@ def create_vault(organization_id, uid, data):
         logger.error('Vault creation failure. No such employee exist')
         logger.error(f'Exit {__name__} module, {create_vault.__name__} method')
         raise CustomApiException(404, 'No such employee exist')
+    except Organization.DoesNotExist:
+        logger.error('Vault creation failure. No such organization exist')
+        logger.error(f'Exit {__name__} module, {create_vault.__name__} method')
+        raise CustomApiException(404, 'No such organization exist')
 
 
-def get_vault(organization_id, uid, vault_id, data):
+def get_vault(organization_id, uid, vault_id):
     """used to get vault of a specific user
     """
     logger.info(f'Enter {__name__} module, {get_vault.__name__} method')
 
     try:
+        organization = Organization.objects.get(
+            organization_id=organization_id, active=True
+        )
+
         vault = Vault.objects.get(
-            vault_id=vault_id,
-            organization__organization_id=organization_id,
-            organization__active=True,
+            vault_id=vault_id, active=True,
+            organization=organization,
         )
 
         employee = Employee.objects.get(
             employee_uid=uid, active=True,
-            organization__organization_id=organization_id,
-            organization__active=True
+            organization=organization,
         )
 
         response_vault = None
@@ -113,33 +115,44 @@ def get_vault(organization_id, uid, vault_id, data):
         logger.error(f'Exit {__name__} module, {get_vault.__name__} method')
         raise CustomApiException(404, 'No such vault exist')
     except Employee.DoesNotExist:
-        logger.error(f'vault for Employee UID : {uid} is not exist')
+        logger.error(f'Employee for Employee UID : {uid} is not exist')
         logger.error(f'Exit {__name__} module, {get_vault.__name__} method')
         raise CustomApiException(404, 'No such employee exist')
+    except Organization.DoesNotExist:
+        logger.error('No such organization exist')
+        logger.error(f'Exit {__name__} module, {get_vault.__name__} method')
+        raise CustomApiException(404, 'No such organization exist')
     except CustomApiException as e:
         logger.error('Enter valid credentials')
         logger.error(f'Exit {__name__} module, {get_vault.__name__} method')
         raise CustomApiException(e.status_code, e.detail)
 
 
-def update_vault(organization_id, vault_id, data):
+def update_vault(organization_id, uid, vault_id, data):
     """used to update vault details
     """
     logger.info(f'Enter {__name__} module, {update_vault.__name__} method')
 
     try:
-        email = data.pop('employee')
-        password = data.pop('password')
+        organization = Organization.objects.get(
+            organization_id=organization_id, active=True
+        )
 
         vault = Vault.objects.get(
             vault_id=vault_id,
-            organization__organization_id=organization_id
+            organization=organization
         )
 
-        if not is_vault_owner(vault, email, password):
+        employee = Employee.objects.get(
+            employee_uid=uid, active=True,
+            organization=organization,
+        )
+
+        if not employee.employee_id == vault.created_by.employee_id:
+            logger.error('Vault update failure.')
             logger.error(f'Exit {__name__} module, '
                          f'{update_vault.__name__} method')
-            raise CustomApiException(400, 'Enter valid details')
+            raise CustomApiException(400, 'Only vault owner can update vault')
 
         vault_serializer = VaultSerializer(vault, data=data, partial=True)
         vault_serializer.is_valid(raise_exception=True)
@@ -160,3 +173,11 @@ def update_vault(organization_id, vault_id, data):
         logger.error(f'Vault for Vault ID : {vault_id} is not exist')
         logger.error(f'Exit {__name__} module, {update_vault.__name__} method')
         raise CustomApiException(404, 'No such vault exist')
+    except Organization.DoesNotExist:
+        logger.error('No such organization exist')
+        logger.error(f'Exit {__name__} module, {update_vault.__name__} method')
+        raise CustomApiException(404, 'No such organization exist')
+    except Employee.DoesNotExist:
+        logger.error(f'vault for Employee UID : {uid} is not exist')
+        logger.error(f'Exit {__name__} module, {update_vault.__name__} method')
+        raise CustomApiException(404, 'No such employee exist')
