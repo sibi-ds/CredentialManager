@@ -3,7 +3,6 @@
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
-# from employee.models import EmployeeAccount
 from employee.models import Employee
 
 

@@ -135,6 +135,20 @@ def do_vault_access(request: HttpRequest, uid, vault_id, vault_access_id):
 
     organization_id = request.query_params.get('organization_id')
 
+    if request.method == 'PUT':
+        try:
+            vault_access = user_access_service.update_vault_access(
+                organization_id, uid, vault_id, vault_access_id, request.data
+            )
+
+            logger.debug(f'Exit {__name__} module, '
+                         f'{do_vault_access.__name__} method')
+            return Response(vault_access)
+        except CustomApiException as e:
+            logger.error(f'Exit {__name__} module, '
+                         f'{do_vault_access.__name__} method')
+            raise CustomApiException(e.status_code, e.detail)
+
     if request.method == 'DELETE':
         try:
             vault_access = user_access_service.delete_vault_access(
