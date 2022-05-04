@@ -114,33 +114,17 @@ def get_component(organization_id, uid, vault_id, component_id, data):
             organization=organization
         )
 
-        response_component = None
-
-        if user_access_service.get_admin_vault_access(
-                organization_id, employee.employee_id, vault_id) is not None:
-            response_component = component
-        elif len(user_access_service.get_organization_vault_accesses(
-                organization_id, vault_id)) > 0:
-            response_component = component
-        elif len(user_access_service.get_project_vault_accesses(
-                organization_id, vault_id, employee.projects.all())) > 0:
-            response_component = component
-        elif len(user_access_service.get_individual_vault_accesses(
-                organization_id, employee.employee_id, vault_id)) > 0:
-            response_component = component
-
-        if response_component is None:
-            logger.error('You don\'t have access for this component')
-            raise CustomApiException(400,
-                                     "You don't have access for this "
-                                     "component")
-
-        component_serializer = ComponentSerializer(response_component)
-
-        logger.debug(f'Exit {__name__} module, '
-                     f'{get_component.__name__} method')
-
-        return component_serializer.data
+        if user_access_service.has_vault_access(organization_id, employee,
+                                                vault_id):
+            component_serializer = ComponentSerializer(component)
+            logger.info(f'Exit {__name__} module, '
+                        f'{get_component.__name__} method')
+            return component_serializer.data
+        else:
+            logger.error(f'Exit {__name__} module, '
+                         f'{get_component.__name__} method')
+            raise CustomApiException(400, 'You don\'t have access '
+                                          'to this vault')
     except KeyError:
         logger.error('Entered details are not valid')
         logger.error(f'Exit {__name__} module, '
@@ -198,24 +182,26 @@ def update_component(organization_id, uid, vault_id, component_id, data):
             organization=organization,
         )
 
-        if not employee.employee_id == component.created_by.employee_id:
+        if user_access_service.can_update_vault(organization_id, employee,
+                                                vault_id):
+            component_serializer = ComponentSerializer(component, data=data,
+                                                       partial=True)
+            component_serializer.is_valid(raise_exception=True)
+            component_serializer.save()
+
+            component = component_serializer.data
+
+            logger.info('Component details updated successfully')
+            logger.info(f'Exit {__name__} module, '
+                        f'{update_component.__name__} method')
+
+            return component
+        else:
             logger.error('Component update failure.')
             logger.error(f'Exit {__name__} module, '
                          f'{update_component.__name__} method')
-            raise CustomApiException(400, 'Only vault owner can update vault')
-
-        component_serializer = ComponentSerializer(instance=component,
-                                                   data=data,
-                                                   partial=True)
-
-        component_serializer.is_valid(raise_exception=True)
-        component_serializer.save()
-
-        logger.debug('Component details updated successfully')
-        logger.debug(f'Exit {__name__} module, '
-                     f'{update_component.__name__} method')
-
-        return component_serializer.data
+            raise CustomApiException(400,
+                                     'You don\'t have component update access')
     except (ValidationError, KeyError):
         logger.error('Entered details are not valid')
         logger.error(f'Exit {__name__} module, '

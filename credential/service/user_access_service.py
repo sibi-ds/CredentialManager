@@ -48,62 +48,154 @@ def get_admin_vault_access(organization_id, employee_id, vault_id):
         return None
 
 
-def get_organization_vault_accesses(organization_id, vault_id):
+def get_organization_vault_access(organization_id, vault_id):
     """used to get organization vault accesses
     """
     logger.debug(f'Enter {__name__} module, '
-                 f'{get_organization_vault_accesses.__name__} method')
+                 f'{get_organization_vault_access.__name__} method')
 
-    vault_accesses = VaultAccess.objects.filter(
-        organization=organization_id, organization__active=True,
-        vault=vault_id, vault__active=True,
-        access_level='ORGANIZATION',
-    )
+    try:
+        vault_access = VaultAccess.objects.get(
+            organization=organization_id, organization__active=True,
+            vault=vault_id, vault__active=True,
+            access_level='ORGANIZATION',
+            active=True
+        )
 
-    logger.debug(f'Exit {__name__} module, '
-                 f'{get_organization_vault_accesses.__name__} method')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{get_organization_vault_access.__name__} method')
 
-    return vault_accesses
+        return vault_access
+    except VaultAccess.DoesNotExist:
+        logger.error('No organization access is provided for this vault')
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_organization_vault_access.__name__} method')
+        return None
 
 
-def get_project_vault_accesses(organization_id, vault_id, projects):
+def get_project_vault_access(organization_id, vault_id, projects):
     """used to get project vault accesses
     """
     logger.debug(f'Enter {__name__} module, '
-                 f'{get_project_vault_accesses.__name__} method')
+                 f'{get_project_vault_access.__name__} method')
 
-    project_ids = [project.project_id for project in projects]
+    try:
+        project_ids = [project.project_id for project in projects]
 
-    vault_accesses = VaultAccess.objects.filter(
-        organization=organization_id, organization__active=True,
-        vault=vault_id, vault__active=True,
-        access_level='PROJECT',
-        project__project_id__in=project_ids,
-    )
+        vault_access = VaultAccess.objects.get(
+            organization=organization_id, organization__active=True,
+            vault=vault_id, vault__active=True,
+            access_level='PROJECT',
+            project__project_id__in=project_ids,
+            active=True
+        )
 
-    logger.debug(f'Exit {__name__} module, '
-                 f'{get_project_vault_accesses.__name__} method')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{get_project_vault_access.__name__} method')
 
-    return vault_accesses
+        return vault_access
+    except VaultAccess.DoesNotExist:
+        logger.error('No project access is given for this vault')
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_project_vault_access.__name__} method')
+        return None
 
 
-def get_individual_vault_accesses(organization_id, employee_id, vault_id):
+def get_individual_vault_access(organization_id, employee_id, vault_id):
     """used to get individual vault accesses
     """
     logger.debug(f'Enter {__name__} module, '
-                 f'{get_individual_vault_accesses.__name__} method')
+                 f'{get_individual_vault_access.__name__} method')
 
-    vault_accesses = VaultAccess.objects.filter(
-        organization=organization_id, organization__active=True,
-        vault=vault_id, vault__active=True,
-        employee__employee_id=employee_id,
-        access_level='INDIVIDUAL',
-    )
+    try:
+        vault_access = VaultAccess.objects.get(
+            organization=organization_id, organization__active=True,
+            vault=vault_id, vault__active=True,
+            employee__employee_id=employee_id,
+            access_level='INDIVIDUAL',
+            active=True
+        )
 
-    logger.debug(f'Exit {__name__} module, '
-                 f'{get_individual_vault_accesses.__name__} method')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{get_individual_vault_access.__name__} method')
 
-    return vault_accesses
+        return vault_access
+    except VaultAccess.DoesNotExist:
+        logger.error('No individual user access is given for this user')
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_individual_vault_access.__name__} method')
+        return None
+
+
+def has_vault_access(organization_id, employee, vault_id):
+    """used to check employee has the vault access
+    """
+    logger.debug(f'Enter {__name__} module, '
+                 f'{has_vault_access.__name__} method')
+
+    admin_vault_access = get_admin_vault_access(
+        organization_id, employee.employee_id, vault_id)
+
+    organization_vault_access = get_organization_vault_access(
+        organization_id, vault_id)
+
+    project_vault_access = get_project_vault_access(
+        organization_id, vault_id, employee.projects.all())
+
+    individual_vault_access = get_individual_vault_access(
+        organization_id, employee.employee_id, vault_id)
+
+    if admin_vault_access is not None \
+            or organization_vault_access is not None \
+            or project_vault_access is not None \
+            or individual_vault_access is not None:
+        logger.debug('The given user has access to this vault')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{has_vault_access.__name__} method')
+        return True
+    else:
+        logger.debug('The given user has no access to this vault')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{has_vault_access.__name__} method')
+        return False
+
+
+def can_update_vault(organization_id, employee, vault_id):
+    """used to check employee has the vault update access
+    """
+    logger.debug(f'Enter {__name__} module, '
+                 f'{has_vault_access.__name__} method')
+
+    admin_vault_access = get_admin_vault_access(
+        organization_id, employee.employee_id, vault_id)
+
+    organization_vault_access = get_organization_vault_access(
+        organization_id, vault_id)
+
+    project_vault_access = get_project_vault_access(
+        organization_id, vault_id, employee.projects.all())
+
+    individual_vault_access = get_individual_vault_access(
+        organization_id, employee.employee_id, vault_id)
+
+    if (admin_vault_access is not None
+            and admin_vault_access.created_by.employee_id
+            == employee.employee_id) \
+        or (organization_vault_access is not None
+            and organization_vault_access.scope == 'READ/WRITE') \
+        or (project_vault_access is not None
+            and project_vault_access.scope == 'READ/WRITE') \
+        or (individual_vault_access is not None
+            and individual_vault_access.scope == 'READ/WRITE'):
+        logger.debug('The given user has access to edit this vault')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{has_vault_access.__name__} method')
+        return True
+    else:
+        logger.debug('The given user has no access to edit this vault')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{has_vault_access.__name__} method')
+        return False
 
 
 def create_vault_access(organization_id, uid, vault_id, data):
@@ -133,25 +225,39 @@ def create_vault_access(organization_id, uid, vault_id, data):
                          f'{create_vault_access.__name__} method')
             raise CustomApiException(400, 'Only vault owner can give access')
 
-        access_level = data.pop('access_level')
+        access_level = data.get('access_level', None)
+        project = data.get('project', None)
+        email = data.get('employee', None)
+        scope = data.get('scope', None)
+
+        employee = Employee.objects.get(
+            email=email, active=True,
+            organization=organization, organization__active=True,
+        )
 
         vault_access = None
 
-        if access_level == 'ORGANIZATION':
+        if access_level == 'ORGANIZATION' \
+                and get_organization_vault_access(organization_id, vault_id) \
+                is None:
             vault_access = create_organization_vault_access(organization_id,
                                                             creating_employee,
-                                                            vault_id)
-        elif access_level == 'PROJECT':
+                                                            vault_id, scope)
+        elif access_level == 'PROJECT' \
+                and get_project_vault_access(organization_id, vault_id,
+                                             [].append(project)) is None:
             vault_access = create_project_vault_access(organization_id,
                                                        creating_employee,
-                                                       data.pop('project'),
-                                                       vault_id)
-        elif access_level == 'INDIVIDUAL':
-            email = data.pop('employee')
-
+                                                       project,
+                                                       vault_id, scope)
+        elif access_level == 'INDIVIDUAL' \
+                and get_individual_vault_access(organization_id,
+                                                employee.employee_id,
+                                                vault_id) is None:
             vault_access = create_individual_vault_access(organization_id,
                                                           creating_employee,
-                                                          email, vault_id)
+                                                          email, vault_id,
+                                                          scope)
 
         if vault_access is None:
             logger.error('Vault access creation failure')
@@ -189,7 +295,7 @@ def create_vault_access(organization_id, uid, vault_id, data):
 
 
 def create_individual_vault_access(organization_id, creating_employee, email,
-                                   vault_id):
+                                   vault_id, scope):
     """used to create vault access for individual employee
     """
     logger.debug(f'Enter {__name__} module, '
@@ -208,6 +314,7 @@ def create_individual_vault_access(organization_id, creating_employee, email,
             vault_id=vault_id,
             access_level='INDIVIDUAL',
             created_by=creating_employee,
+            scope=scope
         )
 
         logger.debug(f'Enter {__name__} module, '
@@ -227,7 +334,7 @@ def create_individual_vault_access(organization_id, creating_employee, email,
 
 
 def create_project_vault_access(organization_id, creating_employee, project_id,
-                                vault_id):
+                                vault_id, scope):
     """used to create vault access for project employee
     """
     logger.debug(f'Enter {__name__} module, '
@@ -245,7 +352,8 @@ def create_project_vault_access(organization_id, creating_employee, project_id,
             vault_id=vault_id,
             access_level='PROJECT',
             created_by=creating_employee,
-            project=project
+            project=project,
+            scope=scope
         )
 
         logger.error('Vault access creation successful')
@@ -266,7 +374,7 @@ def create_project_vault_access(organization_id, creating_employee, project_id,
 
 
 def create_organization_vault_access(organization_id, creating_employee,
-                                     vault_id):
+                                     vault_id, scope):
     """used to create vault access for organization employees
     """
     logger.debug(f'Enter {__name__} module, '
@@ -277,7 +385,8 @@ def create_organization_vault_access(organization_id, creating_employee,
             organization_id=organization_id,
             vault_id=vault_id,
             access_level='ORGANIZATION',
-            created_by=creating_employee
+            created_by=creating_employee,
+            scope=scope
         )
 
         logger.debug(f'Exit {__name__} module, '

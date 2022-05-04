@@ -96,7 +96,7 @@ class Item(BaseModel):
                                    null=True)
 
 
-# model to define vault access for a user
+# model to define vault access for users or organization or project
 class VaultAccess(BaseModel):
     vault_access_id = models.AutoField(primary_key=True)
 

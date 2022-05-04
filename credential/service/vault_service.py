@@ -19,7 +19,6 @@ from utils.api_exceptions import CustomApiException
 logger = logging.getLogger('credential-manager-logger')
 
 
-@transaction.atomic
 def create_vault(organization_id, uid, data):
     """used to create vault for a specific employee of the organization
     where project mapping is optional
@@ -82,30 +81,17 @@ def get_vault(organization_id, uid, vault_id):
             organization=organization,
         )
 
-        response_vault = None
-
-        if user_access_service.get_admin_vault_access(
-                organization_id, employee.employee_id, vault_id) is not None:
-            response_vault = vault
-        elif len(user_access_service.get_organization_vault_accesses(
-                organization_id, vault_id)) > 0:
-            response_vault = vault
-        elif len(user_access_service.get_project_vault_accesses(
-                organization_id, vault_id, employee.projects.all())) > 0:
-            response_vault = vault
-        elif len(user_access_service.get_individual_vault_accesses(
-                organization_id, employee.employee_id, vault_id)) > 0:
-            response_vault = vault
-
-        if response_vault is None:
+        if user_access_service.has_vault_access(organization_id, employee,
+                                                vault_id):
+            vault_serializer = VaultSerializer(vault)
+            logger.info(f'Exit {__name__} module, '
+                        f'{get_vault.__name__} method')
+            return vault_serializer.data
+        else:
+            logger.error(f'Exit {__name__} module, '
+                         f'{get_vault.__name__} method')
             raise CustomApiException(400, 'You don\'t have access '
-                                          'for this vault')
-
-        vault_serializer = VaultSerializer(response_vault)
-
-        logger.info(f'Exit {__name__} module, {get_vault.__name__} method')
-
-        return vault_serializer.data
+                                          'to this vault')
     except KeyError:
         logger.error('Enter valid details')
         logger.error(f'Exit {__name__} module, {get_vault.__name__} method')
@@ -148,23 +134,26 @@ def update_vault(organization_id, uid, vault_id, data):
             organization=organization,
         )
 
-        if not employee.employee_id == vault.created_by.employee_id:
+        if user_access_service.can_update_vault(organization_id, employee,
+                                                vault_id):
+            vault_serializer = VaultSerializer(vault, data=data, partial=True)
+            vault_serializer.is_valid(raise_exception=True)
+            vault_serializer.save()
+
+            vault = vault_serializer.data
+            vault.pop('components')
+
+            logger.info('Vault details updated successfully')
+            logger.info(
+                f'Exit {__name__} module, {update_vault.__name__} method')
+
+            return vault
+        else:
             logger.error('Vault update failure.')
             logger.error(f'Exit {__name__} module, '
                          f'{update_vault.__name__} method')
-            raise CustomApiException(400, 'Only vault owner can update vault')
-
-        vault_serializer = VaultSerializer(vault, data=data, partial=True)
-        vault_serializer.is_valid(raise_exception=True)
-        vault_serializer.save()
-
-        vault = vault_serializer.data
-        vault.pop('components')
-
-        logger.info('Vault details updated successfully')
-        logger.info(f'Exit {__name__} module, {update_vault.__name__} method')
-
-        return vault
+            raise CustomApiException(400,
+                                     'You don\'t have vault update access')
     except (ValidationError, KeyError):
         logger.error('Valid details not provided')
         logger.error(f'Exit {__name__} module, {update_vault.__name__} method')
