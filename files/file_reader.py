@@ -13,7 +13,11 @@ logger = logging.getLogger('credential-manager-logger')
 
 
 def create_employees():
-    logger.debug(f'Enter {__name__} module, create_employees method')
+    """Read employees.txt file as csv and convert
+    into the list of employee dictionary
+    """
+    logger.debug(f'Enter {__name__} module, '
+                 f'{create_employees.__name__} method')
 
     employees = list()
 
@@ -33,13 +37,18 @@ def create_employees():
                 employees.append(employee)
                 line_count += 1
 
-    logger.debug(f'Exit {__name__} module, create_employees method')
+    logger.debug(f'Exit {__name__} module, '
+                 f'{create_employees.__name__} method')
 
     return employees
 
 
 def create_projects():
-    logger.debug(f'Enter {__name__} module, create_projects method')
+    """Read projects.txt file as csv and convert
+    into the list of project dictionary
+    """
+    logger.debug(f'Enter {__name__} module, '
+                 f'{create_projects.__name__} method')
 
     projects = list()
 
@@ -58,6 +67,7 @@ def create_projects():
                 projects.append(project)
                 line_count += 1
 
-    logger.debug(f'Enter {__name__} module, create_projects method')
+    logger.debug(f'Exit {__name__} module, '
+                 f'{create_projects.__name__} method')
 
     return projects

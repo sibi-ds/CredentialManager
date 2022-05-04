@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from employee.serializers import EmployeeSerializer
 
 from files import file_reader
+
 from organization.models import Organization
 
 from utils.api_exceptions import CustomApiException
@@ -24,13 +25,16 @@ def create_employees(request: HttpRequest):
     try:
         logger.debug(f'Enter {__name__} module, create_employees method')
 
+        email = request.data.get("email")
+
         employee_datas = file_reader.create_employees()
 
         organization_id = request.query_params.get('organization_id')
 
         organization = Organization.objects.get(
             organization_id=organization_id,
-            active=True
+            active=True,
+            email=email
         )
 
         for employee in employee_datas:
@@ -47,9 +51,10 @@ def create_employees(request: HttpRequest):
 
         return Response(employee_list_serializer.data)
     except ValidationError:
-        logger.error('Enter valid details.Employees creation failure')
+        logger.error('Load valid details in the file. '
+                     'Employees creation failure')
         logger.error(f'Exit {__name__} module, create_employees method')
-        raise CustomApiException(400, 'Load valid details in the file')
+        raise CustomApiException(500, 'Load valid details in the file')
     except KeyError:
         logger.error('Enter valid details.Employees creation failure')
         logger.error(f'Exit {__name__} module, create_employees method')

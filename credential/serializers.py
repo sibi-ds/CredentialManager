@@ -48,7 +48,7 @@ class ComponentSerializer(serializers.ModelSerializer):
         instance.active = validated_data.get('active', instance.active)
         instance.description = validated_data.get('description',
                                                   instance.description)
-        instance.updated_by = instance.created_by
+        instance.updated_by = validated_data.get('updated_by')
 
         instance.save()
 
@@ -67,6 +67,7 @@ class ComponentSerializer(serializers.ModelSerializer):
                 component_item.updated_by = component_item.created_by
                 component_item.organization = item \
                     .get('organization', component_item.organization)
+                component_item.updated_by = validated_data['updated_by']
                 component_item.save()
             else:
                 Item.objects.create(component=instance, **item,
@@ -121,7 +122,7 @@ class VaultSerializer(serializers.ModelSerializer):
         instance.description = validated_data.get('description',
                                                   instance.description)
         instance.active = validated_data.get('active', instance.active)
-        instance.updated_by = validated_data.get('created_by')
+        instance.updated_by = validated_data.get('updated_by')
         instance.save()
 
         return instance

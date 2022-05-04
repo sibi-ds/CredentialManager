@@ -27,7 +27,6 @@ def create_projects(request: HttpRequest):
         logger.debug(f'Enter {__name__} module, create_employees method')
 
         email = request.data.get("email")
-        password = request.data.get('password')
 
         project_datas = file_reader.create_projects()
 
@@ -35,11 +34,12 @@ def create_projects(request: HttpRequest):
 
         organization = Organization.objects.get(
             organization_id=organization_id,
-            active=True
+            active=True,
+            email=email
         )
 
         for employee in project_datas:
-            employee['organization'] = organization_id
+            employee['organization'] = organization.organization_id
 
         project_list_serializer = ProjectSerializer(
             data=project_datas, many=True
@@ -52,9 +52,10 @@ def create_projects(request: HttpRequest):
 
         return Response(project_list_serializer.data)
     except ValidationError:
-        logger.error('Enter valid details.Projects creation failure')
+        logger.error('Load valid details in the file. '
+                     'Projects creation failure')
         logger.error(f'Exit {__name__} module, create_projects method')
-        raise CustomApiException(400, 'Load valid details in the file')
+        raise CustomApiException(500, 'Load valid details in the file')
     except KeyError:
         logger.error('Enter valid details.Projects creation failure')
         logger.error(f'Exit {__name__} module, create_projects method')

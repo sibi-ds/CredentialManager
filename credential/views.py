@@ -14,6 +14,7 @@ from credential.service import vault_service
 
 from utils.api_exceptions import CustomApiException
 
+
 logger = logging.getLogger('credential-manager-logger')
 
 

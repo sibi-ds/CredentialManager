@@ -2,8 +2,6 @@
 """
 import logging
 
-from django.db import transaction
-
 from credential.models import Vault
 
 from credential.serializers import VaultSerializer
@@ -16,12 +14,12 @@ from organization.models import Organization
 
 from utils.api_exceptions import CustomApiException
 
+
 logger = logging.getLogger('credential-manager-logger')
 
 
 def create_vault(organization_id, uid, data):
-    """used to create vault for a specific employee of the organization
-    where project mapping is optional
+    """used to create vault in an organization
     """
     logger.info(f'Enter {__name__} module, {create_vault.__name__} method')
 
@@ -62,7 +60,7 @@ def create_vault(organization_id, uid, data):
 
 
 def get_vault(organization_id, uid, vault_id):
-    """used to get vault of a specific user
+    """used to get vault from an organization
     """
     logger.info(f'Enter {__name__} module, {get_vault.__name__} method')
 
@@ -136,6 +134,7 @@ def update_vault(organization_id, uid, vault_id, data):
 
         if user_access_service.can_update_vault(organization_id, employee,
                                                 vault_id):
+            data['updated_by'] = employee.employee_id
             vault_serializer = VaultSerializer(vault, data=data, partial=True)
             vault_serializer.is_valid(raise_exception=True)
             vault_serializer.save()
@@ -143,13 +142,14 @@ def update_vault(organization_id, uid, vault_id, data):
             vault = vault_serializer.data
             vault.pop('components')
 
-            logger.info('Vault details updated successfully')
-            logger.info(
-                f'Exit {__name__} module, {update_vault.__name__} method')
+            logger.debug('Vault details updated successfully')
+            logger.debug(f'Exit {__name__} module, '
+                         f'{update_vault.__name__} method')
 
             return vault
         else:
-            logger.error('Vault update failure.')
+            logger.error('Vault update failure. '
+                         'User don\'t have vault update access')
             logger.error(f'Exit {__name__} module, '
                          f'{update_vault.__name__} method')
             raise CustomApiException(400,

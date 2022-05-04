@@ -3,20 +3,20 @@ components of a vault
 """
 import logging
 
-from django.contrib.auth.hashers import check_password
 from rest_framework.exceptions import ValidationError
 
 from credential.models import Component
 from credential.models import Vault
 
 from credential.serializers import ComponentSerializer
+from credential.service import user_access_service
+
 from employee.models import Employee
 
-from employee.service import employee_service
-from credential.service import user_access_service, vault_service
 from organization.models import Organization
 
 from utils.api_exceptions import CustomApiException
+
 
 logger = logging.getLogger('credential-manager-logger')
 
@@ -44,8 +44,9 @@ def create_component(organization_id, uid, vault_id, data):
             organization__active=True
         )
 
-        if not employee.employee_id == vault.created_by.employee_id:
-            logger.error('Component creation failure.')
+        if employee.employee_id != vault.created_by.employee_id:
+            logger.error('Component creation failure. '
+                         'Only vault owner can create component in a vault')
             logger.error(f'Exit {__name__} module, '
                          f'{create_component.__name__} method')
             raise CustomApiException(400,
@@ -70,13 +71,15 @@ def create_component(organization_id, uid, vault_id, data):
                      f'{create_component.__name__} method')
         raise CustomApiException(400, 'Enter valid details')
     except Organization.DoesNotExist:
-        logger.error(f'Organization with Organization ID: '
+        logger.error(f'Component creation failure. '
+                     f'Organization with Organization ID: '
                      f'{organization_id} not exist')
         logger.error(f'Exit {__name__} module, '
                      f'{create_component.__name__} method')
         raise CustomApiException(400, 'No such organization exist')
     except Vault.DoesNotExist:
-        logger.error(f'Vault with Vault ID:  {vault_id} not exist')
+        logger.error(f'Component creation failure. '
+                     f'Vault with Vault ID:  {vault_id} not exist')
         logger.error(f'Exit {__name__} module, '
                      f'{create_component.__name__} method')
         raise CustomApiException(400, 'No such vault exist')
@@ -117,8 +120,8 @@ def get_component(organization_id, uid, vault_id, component_id, data):
         if user_access_service.has_vault_access(organization_id, employee,
                                                 vault_id):
             component_serializer = ComponentSerializer(component)
-            logger.info(f'Exit {__name__} module, '
-                        f'{get_component.__name__} method')
+            logger.debug(f'Exit {__name__} module, '
+                         f'{get_component.__name__} method')
             return component_serializer.data
         else:
             logger.error(f'Exit {__name__} module, '
@@ -184,6 +187,7 @@ def update_component(organization_id, uid, vault_id, component_id, data):
 
         if user_access_service.can_update_vault(organization_id, employee,
                                                 vault_id):
+            data['updated_by'] = employee.employee_id
             component_serializer = ComponentSerializer(component, data=data,
                                                        partial=True)
             component_serializer.is_valid(raise_exception=True)
@@ -191,9 +195,9 @@ def update_component(organization_id, uid, vault_id, component_id, data):
 
             component = component_serializer.data
 
-            logger.info('Component details updated successfully')
-            logger.info(f'Exit {__name__} module, '
-                        f'{update_component.__name__} method')
+            logger.debug('Component details updated successfully')
+            logger.debug(f'Exit {__name__} module, '
+                         f'{update_component.__name__} method')
 
             return component
         else:

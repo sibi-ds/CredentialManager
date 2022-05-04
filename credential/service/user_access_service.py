@@ -3,18 +3,18 @@ accesses for the employees in an organization
 """
 import logging
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 
 from rest_framework.exceptions import ValidationError
-from rest_framework.response import Response
 
 from credential.models import Vault
 from credential.models import VaultAccess
-
 from credential.serializers import VaultAccessSerializer
+
 from employee.models import Employee
+
 from organization.models import Organization
+
 from project.models import Project
 
 from utils.api_exceptions import CustomApiException
@@ -49,7 +49,7 @@ def get_admin_vault_access(organization_id, employee_id, vault_id):
 
 
 def get_organization_vault_access(organization_id, vault_id):
-    """used to get organization vault accesses
+    """used to get organization vault access
     """
     logger.debug(f'Enter {__name__} module, '
                  f'{get_organization_vault_access.__name__} method')
@@ -74,7 +74,7 @@ def get_organization_vault_access(organization_id, vault_id):
 
 
 def get_project_vault_access(organization_id, vault_id, projects):
-    """used to get project vault accesses
+    """used to get project vault access
     """
     logger.debug(f'Enter {__name__} module, '
                  f'{get_project_vault_access.__name__} method')
@@ -102,7 +102,7 @@ def get_project_vault_access(organization_id, vault_id, projects):
 
 
 def get_individual_vault_access(organization_id, employee_id, vault_id):
-    """used to get individual vault accesses
+    """used to get individual vault access
     """
     logger.debug(f'Enter {__name__} module, '
                  f'{get_individual_vault_access.__name__} method')
@@ -149,6 +149,7 @@ def has_vault_access(organization_id, employee, vault_id):
             or organization_vault_access is not None \
             or project_vault_access is not None \
             or individual_vault_access is not None:
+
         logger.debug('The given user has access to this vault')
         logger.debug(f'Exit {__name__} module, '
                      f'{has_vault_access.__name__} method')
@@ -187,6 +188,7 @@ def can_update_vault(organization_id, employee, vault_id):
             and project_vault_access.scope == 'READ/WRITE') \
         or (individual_vault_access is not None
             and individual_vault_access.scope == 'READ/WRITE'):
+
         logger.debug('The given user has access to edit this vault')
         logger.debug(f'Exit {__name__} module, '
                      f'{has_vault_access.__name__} method')
@@ -226,38 +228,53 @@ def create_vault_access(organization_id, uid, vault_id, data):
             raise CustomApiException(400, 'Only vault owner can give access')
 
         access_level = data.get('access_level', None)
-        project = data.get('project', None)
-        email = data.get('employee', None)
         scope = data.get('scope', None)
-
-        employee = Employee.objects.get(
-            email=email, active=True,
-            organization=organization, organization__active=True,
-        )
 
         vault_access = None
 
-        if access_level == 'ORGANIZATION' \
-                and get_organization_vault_access(organization_id, vault_id) \
-                is None:
-            vault_access = create_organization_vault_access(organization_id,
-                                                            creating_employee,
-                                                            vault_id, scope)
-        elif access_level == 'PROJECT' \
-                and get_project_vault_access(organization_id, vault_id,
-                                             [].append(project)) is None:
-            vault_access = create_project_vault_access(organization_id,
-                                                       creating_employee,
-                                                       project,
-                                                       vault_id, scope)
-        elif access_level == 'INDIVIDUAL' \
-                and get_individual_vault_access(organization_id,
-                                                employee.employee_id,
-                                                vault_id) is None:
-            vault_access = create_individual_vault_access(organization_id,
-                                                          creating_employee,
-                                                          email, vault_id,
-                                                          scope)
+        if access_level == 'ORGANIZATION':
+            if get_organization_vault_access(organization_id, vault_id) \
+                    is not None:
+                raise CustomApiException(400, 'Organization access is '
+                                              'already given for this vault')
+            else:
+                vault_access = create_organization_vault_access(
+                    organization_id, creating_employee, vault_id, scope)
+        elif access_level == 'PROJECT':
+
+            project = Project.objects.get(
+                project_id=data.get('project', None), active=True,
+                organization=organization, organization__active=True,
+            )
+
+            if get_project_vault_access(organization_id, vault_id,
+                                        [project]) is not None:
+                raise CustomApiException(400, 'Project access is already '
+                                              'given to this project '
+                                              'for this vault')
+            else:
+                vault_access = create_project_vault_access(
+                    organization_id, creating_employee, project.project_id,
+                    vault_id, scope)
+        elif access_level == 'INDIVIDUAL':
+
+            email = data.get('employee', None)
+
+            employee = Employee.objects.get(
+                email=email, active=True,
+                organization=organization, organization__active=True,
+            )
+
+            if get_individual_vault_access(organization_id,
+                                           employee.employee_id, vault_id) \
+                    is not None:
+                raise CustomApiException(400, 'Individual access is already '
+                                              'given to the given user '
+                                              'for this vault')
+            else:
+                vault_access = create_individual_vault_access(
+                    organization_id, creating_employee, email,
+                    vault_id, scope)
 
         if vault_access is None:
             logger.error('Vault access creation failure')
@@ -286,6 +303,11 @@ def create_vault_access(organization_id, uid, vault_id, data):
         logger.error(f'Exit {__name__} module, '
                      f'{create_vault_access.__name__} method')
         raise CustomApiException(404, 'No such employee exist')
+    except Project.DoesNotExist:
+        logger.error(f'Project for Project ID : {project} does not exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{create_vault_access.__name__} method')
+        raise CustomApiException(404, 'No such project exist')
     except Organization.DoesNotExist:
         logger.error(f'Organization with Organization ID: '
                      f'{organization_id} not exist')
@@ -400,47 +422,6 @@ def create_organization_vault_access(organization_id, creating_employee,
         return None
 
 
-def remove_vault_access(vault_id, data):
-    """used to remove vault access of the employee
-    """
-    logger.info(f'Enter {__name__} module, '
-                f'{remove_vault_access.__name__} method')
-
-    try:
-        email = data.pop('email')
-
-        vault_access = VaultAccess.objects.get(
-            employee=email,
-            vault=vault_id,
-            active=True
-        )
-
-        vault_access_serializer = VaultAccessSerializer(vault_access,
-                                                        data=data,
-                                                        partial=True)
-        vault_access_serializer.is_valid(raise_exception=True)
-        vault_access_serializer.save()
-
-        logger.info('Vault access status changed successfully')
-        logger.info(f'Exit {__name__} module, '
-                    f'{remove_vault_access.__name__} method')
-
-        return Response('The access for ' + email
-                        + ' is changed successfully')
-    except ObjectDoesNotExist:
-        logger.error('The vault access does not exist '
-                     'for the given credentials')
-        logger.error(f'Exit {__name__} module, '
-                     f'{remove_vault_access.__name__} method')
-        return Response('No such vault access exist')
-    except (ValidationError, KeyError):
-        logger.error('The given email address is not belong '
-                     'to the organization')
-        logger.error(f'Exit {__name__} module, '
-                     f'{remove_vault_access.__name__} method')
-        return CustomApiException(500, 'Enter valid details')
-
-
 def update_vault_access(organization_id, uid, vault_id, vault_access_id, data):
     logger.debug(f'Enter {__name__} module, '
                  f'{update_vault_access.__name__} method')
@@ -490,7 +471,7 @@ def delete_vault_access(organization_id, uid, vault_id, vault_access_id):
             created_by=vault_owner
         )
 
-        if not vault_owner.employee_id == vault_access.created_by.employee_id:
+        if vault_owner.employee_id != vault_access.created_by.employee_id:
             logger.error('Only vault owner can remove access')
             raise CustomApiException(400, 'Only vault owner can remove access')
 
