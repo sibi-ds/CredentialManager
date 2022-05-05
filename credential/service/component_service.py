@@ -44,27 +44,29 @@ def create_component(organization_id, uid, vault_id, data):
             organization__active=True
         )
 
-        if employee.employee_id != vault.created_by.employee_id:
+        if user_access_service.can_update_vault(organization_id, employee,
+                                                vault_id):
+            data['vault'] = vault.vault_id
+            data['organization'] = organization.organization_id
+            data['created_by'] = employee.employee_id
+
+            component_serializer = ComponentSerializer(data=data, partial=True)
+
+            component_serializer.is_valid(raise_exception=True)
+            component_serializer.save()
+
+            logger.debug('Component created successfully')
+            logger.debug(f'Exit {__name__} module, '
+                         f'{create_component.__name__} method')
+
+            return component_serializer.data
+        else:
             logger.error('Component creation failure. '
-                         'Only vault owner can create component in a vault')
+                         'User don\'t have component creation access')
             logger.error(f'Exit {__name__} module, '
                          f'{create_component.__name__} method')
-            raise CustomApiException(400,
-                                     'Only vault owner can create components')
-
-        data['vault'] = vault_id
-        data['organization'] = organization_id
-        data['created_by'] = employee.employee_id
-
-        component_serializer = ComponentSerializer(data=data, partial=True)
-
-        component_serializer.is_valid(raise_exception=True)
-        component_serializer.save()
-
-        logger.debug(f'Exit {__name__} module, '
-                     f'{create_component.__name__} method')
-
-        return component_serializer.data
+            raise CustomApiException(400, 'You don\'t have component '
+                                          'creation access')
     except ValidationError:
         logger.error('Entered details are not valid')
         logger.error(f'Exit {__name__} module, '
