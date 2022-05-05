@@ -42,6 +42,10 @@ class BaseModel(models.Model):
 
 
 class Employee(BaseModel):
+
+    class Meta:
+        db_table = 'cm_employee'
+
     employee_id = models.AutoField(primary_key=True)
     employee_uid = models.UUIDField(default=uuid.uuid4, editable=False,
                                     unique=True)

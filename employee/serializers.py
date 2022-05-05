@@ -1,8 +1,11 @@
 """This module contains serializers related to employee information
 """
 from django.contrib.auth.hashers import make_password
+
 from rest_framework import serializers
 
+from credential.serializers import VaultSerializer, VaultAccessSerializer, \
+    VaultResponseSerializer
 from employee.models import Employee
 
 
@@ -27,6 +30,7 @@ from employee.models import Employee
 
 
 class EmployeeSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Employee
         fields = ['employee_id', 'employee_uid', 'name', 'email',
@@ -47,3 +51,15 @@ class EmployeeSerializer(serializers.ModelSerializer):
         employee.save()
 
         return employee
+
+
+class EmployeeResponseSerializer(serializers.ModelSerializer):
+
+    created_vaults = VaultResponseSerializer(many=True)
+
+    class Meta:
+        model = Employee
+        fields = ['employee_id', 'employee_uid', 'name', 'email',
+                  'organization', 'active',
+                  'created_vaults',
+                  'created_at', 'created_by', 'updated_at', 'updated_by', ]

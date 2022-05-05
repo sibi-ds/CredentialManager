@@ -21,6 +21,10 @@ class BaseModel(models.Model):
 
 # model to define vault for a user
 class Vault(BaseModel):
+
+    class Meta:
+        db_table = 'cm_vault'
+
     vault_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     description = models.TextField()
@@ -44,6 +48,10 @@ class Vault(BaseModel):
 
 # model to define component of a vault
 class Component(BaseModel):
+
+    class Meta:
+        db_table = 'cm_component'
+
     component_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     description = models.TextField()
@@ -71,6 +79,10 @@ class Component(BaseModel):
 
 # model to define item of a component
 class Item(BaseModel):
+
+    class Meta:
+        db_table = 'cm_item'
+
     item_id = models.AutoField(primary_key=True)
     key = models.CharField(max_length=45)
     value = encrypt(models.CharField(max_length=45))
@@ -98,6 +110,10 @@ class Item(BaseModel):
 
 # model to define vault access for users or organization or project
 class VaultAccess(BaseModel):
+
+    class Meta:
+        db_table = 'cm_vault_access'
+
     vault_access_id = models.AutoField(primary_key=True)
 
     access_levels = (
@@ -124,6 +140,7 @@ class VaultAccess(BaseModel):
     employee = models.ForeignKey(Employee, to_field='employee_id',
                                  db_column='employee_id',
                                  on_delete=models.CASCADE,
+                                 related_name='vault_accesses',
                                  null=True)
 
     project = models.ForeignKey(Project, blank=True, null=True,

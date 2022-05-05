@@ -34,6 +34,20 @@ def create_organization(request: HttpRequest):
         raise CustomApiException(400, 'Enter valid details')
 
 
+@api_view(['GET'])
+def get_organizations(request: HttpRequest):
+    logger.debug(f'Enter {__name__} module, get_organizations method')
+
+    organizations = Organization.objects.all()
+
+    organization_serializer = OrganizationSerializer(organizations,
+                                                     many=True)
+
+    logger.debug(f'Exit {__name__} module, get_organizations method')
+
+    return Response(organization_serializer.data)
+
+
 @api_view(['GET', 'PUT'])
 def do_organization(request: HttpRequest, organization_id):
     logger.debug(f'Enter {__name__} module, do_organization method')

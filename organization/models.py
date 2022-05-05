@@ -16,6 +16,10 @@ class BaseModel(models.Model):
 
 # model to define tenant
 class Organization(BaseModel):
+
+    class Meta:
+        db_table = 'cm_organization'
+
     organization_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45, unique=True)
     email = models.EmailField(unique=True)

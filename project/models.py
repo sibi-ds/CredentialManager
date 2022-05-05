@@ -17,6 +17,10 @@ class BaseModel(models.Model):
 
 
 class Project(BaseModel):
+
+    class Meta:
+        db_table = 'cm_project'
+
     project_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
     email = models.EmailField(max_length=45, unique=True)

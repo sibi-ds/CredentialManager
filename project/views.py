@@ -10,9 +10,10 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from files import file_reader
-from organization.models import Organization
-from project.models import Project
 
+from organization.models import Organization
+
+from project.models import Project
 from project.serializers import ProjectSerializer
 
 from utils.api_exceptions import CustomApiException
@@ -23,6 +24,8 @@ logger = logging.getLogger('credential-manager-logger')
 
 @api_view(['POST', ])
 def create_projects(request: HttpRequest):
+    """used to create projects using projects csv file
+    """
     try:
         logger.debug(f'Enter {__name__} module, create_employees method')
 
