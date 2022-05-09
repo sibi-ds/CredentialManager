@@ -41,8 +41,9 @@ def create_projects(request: HttpRequest):
             email=email
         )
 
-        for employee in project_datas:
-            employee['organization'] = organization.organization_id
+        for project in project_datas:
+            project['organization'] = organization.organization_id
+            project['created_by'] = organization.organization_id
 
         project_list_serializer = ProjectSerializer(
             data=project_datas, many=True

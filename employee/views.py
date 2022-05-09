@@ -44,6 +44,7 @@ def create_employees(request: HttpRequest):
 
         for employee in employee_datas:
             employee['organization'] = organization.organization_id
+            employee['created_by'] = organization.organization_id
 
         employee_list_serializer = EmployeeSerializer(
             data=employee_datas, many=True

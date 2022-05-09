@@ -42,9 +42,11 @@ class EmployeeSerializer(serializers.ModelSerializer):
         name = validated_data.get('name')
         email = validated_data.get('email')
         organization = validated_data.get('organization')
+        created_by = validated_data.get('created_by')
 
         employee = Employee.objects.create(
-            name=name, email=email, organization=organization
+            name=name, email=email, organization=organization,
+            created_by=created_by
         )
 
         employee.password = make_password(validated_data.get('password'))

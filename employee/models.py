@@ -14,7 +14,6 @@ from project.models import Project
 class BaseModel(models.Model):
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
-    created_by = models.IntegerField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, blank=True)
     updated_by = models.IntegerField(null=True, blank=True)
 
@@ -61,3 +60,8 @@ class Employee(BaseModel):
     projects = models.ManyToManyField(Project,
                                       related_name='employees',
                                       blank=True)
+
+    created_by = models.ForeignKey(Organization, to_field='organization_id',
+                                   db_column='created_by',
+                                   related_name='created_employees',
+                                   on_delete=models.CASCADE)

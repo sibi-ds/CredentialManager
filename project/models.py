@@ -7,7 +7,6 @@ from organization.models import Organization
 
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
-    created_by = models.IntegerField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, blank=True)
     updated_by = models.IntegerField(null=True, blank=True)
     active = models.BooleanField(default=True)
@@ -30,3 +29,8 @@ class Project(BaseModel):
                                      to_field='organization_id',
                                      db_column='organization_id',
                                      related_name='projects')
+
+    created_by = models.ForeignKey(Organization, to_field='organization_id',
+                                   db_column='created_by',
+                                   related_name='created_projects',
+                                   on_delete=models.CASCADE)
