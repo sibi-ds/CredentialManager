@@ -1,7 +1,11 @@
 """this module is used to do employee related operations
 """
 import logging
+import sqlite3
 
+import psycopg2
+from django.contrib import postgres
+from django.db import transaction
 from django.http import HttpRequest
 
 from rest_framework.decorators import api_view
@@ -73,6 +77,7 @@ def create_employees(request: HttpRequest):
 
 
 @api_view(['POST'])
+@transaction.atomic
 def get_employee(request: HttpRequest):
     """used to get employee details and associated vaults using employee email
     """
@@ -99,12 +104,21 @@ def get_employee(request: HttpRequest):
             organization=organization_id,
             organization__active=True
         )
+
         project_level_vaults_accesses = VaultAccess.objects.filter(
             access_level='PROJECT',
             active=True,
             organization=organization_id,
             organization__active=True,
             project__employees__employee_id=employee.employee_id
+        )
+
+        individual_level_vault_accesses = VaultAccess.objects.filter(
+            access_level='INDIVIDUAL',
+            active=True,
+            organization=organization_id,
+            organization__active=True,
+            employee=employee.employee_id
         )
 
         organization_level_vaults = [
@@ -117,6 +131,12 @@ def get_employee(request: HttpRequest):
             for project_vault_access in project_level_vaults_accesses
         ]
 
+        individual_level_vaults = [
+            individual_level_vault_access.vault
+            for individual_level_vault_access
+            in individual_level_vault_accesses
+        ]
+
         employee_serializer = EmployeeResponseSerializer(employee)
 
         response_employee = employee_serializer.data
@@ -125,6 +145,9 @@ def get_employee(request: HttpRequest):
             .data
         response_employee['project_vaults'] \
             = VaultResponseSerializer(project_level_vaults, many=True) \
+            .data
+        response_employee['individual_vaults'] \
+            = VaultResponseSerializer(individual_level_vaults, many=True) \
             .data
 
         logger.debug(f'Exit {__name__} module, get_employee method')
@@ -147,6 +170,51 @@ def get_employee(request: HttpRequest):
         logger.error('Employee not exist')
         logger.error(f'Exit {__name__} module, get_employee method')
         raise CustomApiException(404, 'No such employee exist')
+
+
+@api_view(['GET'])
+def check(request: HttpRequest):
+    employee_id = 1
+
+    query = f'SELECT * from cm_employee where employee_id={employee_id}'
+
+    # employee = Employee.objects.raw(query)
+    # return Response(EmployeeSerializer(employee, many=True).data)
+
+    mydb = psycopg2.connect(
+        host="localhost",
+        user="postgres",
+        password="root",
+        database="credential_manager"
+    )
+
+    mycursor = mydb.cursor()
+
+    q = 'select * from cm_vault as v ' \
+        'left join cm_vault_access as va ' \
+        'on v.vault_id=va.vault_id ' \
+        'where va.vault_id=1 and va.organization_id=1 and va.employee_id=1'
+
+    mycursor.execute(q)
+
+    myresult = mycursor.fetchall()
+
+    print(myresult)
+
+    for i in myresult:
+        print(i)
+
+    employee = Employee.objects.get(employee_id=employee_id)
+    accesses = VaultAccess.objects.raw(
+        f'select * from cm_vault_access as va '
+        'inner join cm_vault as v '
+        'on v.vault_id=va.vault_id'
+    )
+
+    for i in accesses:
+        print(i)
+
+    return Response(EmployeeSerializer(employee, many=False).data)
 
 
 # @csrf_exempt
