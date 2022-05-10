@@ -85,7 +85,8 @@ class Item(BaseModel):
 
     item_id = models.AutoField(primary_key=True)
     key = models.CharField(max_length=45)
-    value = encrypt(models.CharField(max_length=45))
+    value = models.CharField(max_length=136)
+    salt = models.CharField(max_length=44)
 
     component = models.ForeignKey(Component, on_delete=models.CASCADE,
                                   to_field='component_id',

@@ -1,18 +1,20 @@
 """this module is used to do employee related operations
 """
+import base64
 import logging
-import sqlite3
+import os
 
-import psycopg2
-from django.contrib import postgres
 from django.db import transaction
 from django.http import HttpRequest
+from django.contrib.auth.hashers import check_password, PBKDF2PasswordHasher, \
+    make_password, get_hashers, identify_hasher
+from utils.encryption_decryption import encrypt, decrypt, generate_key
 
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from credential.models import VaultAccess
+from credential.models import VaultAccess, Item
 from credential.serializers import VaultResponseSerializer
 from employee.models import Employee
 from employee.serializers import EmployeeSerializer, EmployeeResponseSerializer
@@ -204,17 +206,21 @@ def get_employees(request: HttpRequest, organization_id):
         raise CustomApiException(404, 'No such organization exist')
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 def check(request: HttpRequest):
-    employee_id = 5
 
-    query = f'SELECT * from cm_employee as e ' \
-            f'right join cm_vault_access as va ' \
-            f'on va.employee_id=e.employee_id ' \
-            f'where e.employee_id={employee_id}'
+    employee_id = request.data.get('employee_id')
+    password = request.data.get('password')
+    salt = request.data.get('salt')
 
-    employee = Employee.objects.raw(query)
-    return Response(EmployeeSerializer(employee, many=True).data)
+    item = Item.objects.get(item_id=15)
+
+    salt = bytes(item.salt, 'utf-8')
+    print(salt)
+
+    print(decrypt(item.value, salt))
+
+    return Response('ok')
 
 
 # @csrf_exempt

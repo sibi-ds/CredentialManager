@@ -79,12 +79,10 @@ def create_component(request: HttpRequest, uid, vault_id):
         organization_id = request.query_params.get('organization_id')
         component = component_service.create_component(organization_id, uid,
                                                        vault_id, request.data)
-        logger.debug(f'Exit {__name__} module, '
-                     f'{create_component.__name__} method')
+        logger.debug(f'Exit {__name__} module, create_component method')
         return Response(component)
     except CustomApiException as e:
-        logger.error(f'Exit {__name__} module, '
-                     f'{create_component.__name__} method')
+        logger.error(f'Exit {__name__} module, create_component method')
         raise CustomApiException(e.status_code, e.detail)
 
 
@@ -99,12 +97,10 @@ def do_component(request: HttpRequest, uid, vault_id, component_id):
             component = component_service.get_component(organization_id, uid,
                                                         vault_id, component_id,
                                                         request.data)
-            logger.debug(f'Exit {__name__} module,'
-                         f'{do_component.__name__} method')
+            logger.debug(f'Exit {__name__} module, do_component method')
             return Response(component)
         except CustomApiException as e:
-            logger.error(f'Exit {__name__} module,'
-                         f'{do_component.__name__} method')
+            logger.error(f'Exit {__name__} module, do_component method')
             raise CustomApiException(e.status_code, e.detail)
 
     if request.method == 'PUT':
@@ -114,12 +110,10 @@ def do_component(request: HttpRequest, uid, vault_id, component_id):
                                                            vault_id,
                                                            component_id,
                                                            request.data)
-            logger.debug(f'Exit {__name__} module, '
-                         f'{do_component.__name__} method')
+            logger.debug(f'Exit {__name__} module, do_component method')
             return Response(component)
         except CustomApiException as e:
-            logger.error(f'Exit {__name__} module, '
-                         f'{do_component.__name__} method')
+            logger.error(f'Exit {__name__} module, do_component method')
             raise CustomApiException(e.status_code, e.detail)
 
 
@@ -134,12 +128,10 @@ def create_vault_access(request: HttpRequest, uid, vault_id):
             organization_id, uid, vault_id, request.data
         )
 
-        logger.debug(f'Exit {__name__} module, '
-                     f'{do_vault_access.__name__} method')
+        logger.debug(f'Exit {__name__} module, create_vault_access method')
         return Response(vault_access)
     except CustomApiException as e:
-        logger.error(f'Exit {__name__} module, '
-                     f'{do_vault_access.__name__} method')
+        logger.error(f'Exit {__name__} module, create_vault_access method')
         raise CustomApiException(e.status_code, e.detail)
 
 
@@ -155,12 +147,10 @@ def do_vault_access(request: HttpRequest, uid, vault_id, vault_access_id):
                 organization_id, uid, vault_id, vault_access_id, request.data
             )
 
-            logger.debug(f'Exit {__name__} module, '
-                         f'{do_vault_access.__name__} method')
+            logger.debug(f'Exit {__name__} module, do_vault_access method')
             return Response(vault_access)
         except CustomApiException as e:
-            logger.error(f'Exit {__name__} module, '
-                         f'{do_vault_access.__name__} method')
+            logger.error(f'Exit {__name__} module, do_vault_access method')
             raise CustomApiException(e.status_code, e.detail)
 
     if request.method == 'DELETE':
@@ -169,10 +159,8 @@ def do_vault_access(request: HttpRequest, uid, vault_id, vault_access_id):
                 organization_id, uid, vault_id, vault_access_id
             )
 
-            logger.debug(f'Exit {__name__} module, '
-                         f'{do_vault_access.__name__} method')
+            logger.debug(f'Exit {__name__} module, do_vault_access method')
             return Response(vault_access)
         except CustomApiException as e:
-            logger.error(f'Exit {__name__} module, '
-                         f'{do_vault_access.__name__} method')
+            logger.error(f'Exit {__name__} module, do_vault_access method')
             raise CustomApiException(e.status_code, e.detail)

@@ -8,20 +8,22 @@ from credential.models import Item
 from credential.models import Vault
 from credential.models import VaultAccess
 
+from utils.encryption_decryption import encrypt, decrypt, generate_key
+
 
 class ItemSerializer(serializers.ModelSerializer):
     item_id = serializers.IntegerField(required=False)
 
     class Meta:
         model = Item
-        fields = ('item_id', 'key', 'value', 'active',
+        fields = ('item_id', 'key', 'value', 'salt', 'active',
                   'component', 'organization',
                   'created_at', 'created_by', 'updated_at', 'updated_by')
         read_only_fields = ('component',)
 
 
 class ComponentSerializer(serializers.ModelSerializer):
-    items = ItemSerializer(many=True)
+    items = ItemSerializer(many=True, write_only=True)
 
     class Meta:
         model = Component
@@ -36,6 +38,10 @@ class ComponentSerializer(serializers.ModelSerializer):
         component = Component.objects.create(**validated_data)
 
         for item in items:
+            salt = generate_key()
+            item['value'] = encrypt(item.get('value'), salt)
+            item['salt'] = salt.decode('utf-8')
+
             Item.objects.create(component=component, **item,
                                 created_by=component.created_by,
                                 organization=component.organization)
@@ -74,6 +80,16 @@ class ComponentSerializer(serializers.ModelSerializer):
                                     created_by=instance.created_by)
 
         return instance
+
+
+class ComponentResponseSerializer(serializers.ModelSerializer):
+    items = ItemSerializer(many=True)
+
+    class Meta:
+        model = Component
+        fields = ('component_id', 'name', 'description', 'active',
+                  'organization', 'vault', 'items',
+                  'created_at', 'created_by', 'updated_at', 'updated_by')
 
 
 class ComponentOnlySerializer(serializers.ModelSerializer):

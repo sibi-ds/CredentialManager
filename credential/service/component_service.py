@@ -8,7 +8,8 @@ from rest_framework.exceptions import ValidationError
 from credential.models import Component
 from credential.models import Vault
 
-from credential.serializers import ComponentSerializer
+from credential.serializers import ComponentSerializer, \
+    ComponentResponseSerializer
 from credential.service import user_access_service
 
 from employee.models import Employee
@@ -24,8 +25,8 @@ logger = logging.getLogger('credential-manager-logger')
 def create_component(organization_id, uid, vault_id, data):
     """used to create component for a vault
     """
-    logger.debug(
-        f'Enter {__name__} module, {create_component.__name__} method')
+    logger.debug(f'Enter {__name__} module, '
+                 f'{create_component.__name__} method')
 
     try:
         organization = Organization.objects.get(
@@ -121,7 +122,7 @@ def get_component(organization_id, uid, vault_id, component_id, data):
 
         if user_access_service.has_vault_access(organization_id, employee,
                                                 vault_id):
-            component_serializer = ComponentSerializer(component)
+            component_serializer = ComponentResponseSerializer(component)
             logger.debug(f'Exit {__name__} module, '
                          f'{get_component.__name__} method')
             return component_serializer.data

@@ -4,8 +4,8 @@ from django.contrib.auth.hashers import make_password
 
 from rest_framework import serializers
 
-from credential.serializers import VaultSerializer, VaultAccessSerializer, \
-    VaultResponseSerializer
+from credential.serializers import VaultResponseSerializer
+
 from employee.models import Employee
 
 
