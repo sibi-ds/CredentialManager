@@ -6,7 +6,8 @@ from rest_framework.exceptions import ValidationError
 
 from credential.models import Vault
 
-from credential.serializers import VaultSerializer
+from credential.serializers import VaultSerializer, VaultResponseSerializer, \
+    VaultOnlySerializer
 from credential.service import user_access_service
 
 from employee.models import Employee
@@ -57,6 +58,32 @@ def create_vault(organization_id, uid, data):
     except Organization.DoesNotExist:
         logger.error('Vault creation failure. No such organization exist')
         logger.error(f'Exit {__name__} module, {create_vault.__name__} method')
+        raise CustomApiException(404, 'No such organization exist')
+
+
+def get_vaults(organization_id, data):
+    """used to get all vaults from an organization
+    """
+    logger.info(f'Enter {__name__} module, {get_vaults.__name__} method')
+
+    try:
+        organization = Organization.objects.get(
+            organization_id=organization_id, active=True,
+            email=data.get('email')
+        )
+
+        vaults = Vault.objects.filter(organization=organization_id)
+
+        vault_serializer = VaultOnlySerializer(vaults, many=True)
+
+        return vault_serializer.data
+    except KeyError:
+        logger.error('Enter valid details')
+        logger.error(f'Exit {__name__} module, {get_vaults.__name__} method')
+        raise CustomApiException(400, 'Enter valid details')
+    except Organization.DoesNotExist:
+        logger.error('No such organization exist')
+        logger.error(f'Exit {__name__} module, {get_vaults.__name__} method')
         raise CustomApiException(404, 'No such organization exist')
 
 

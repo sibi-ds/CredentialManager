@@ -32,6 +32,19 @@ def create_vault(request: HttpRequest, uid):
         raise CustomApiException(e.status_code, e.detail)
 
 
+@api_view(['POST'])
+def get_vaults(request: HttpRequest, organization_id):
+    logger.debug(f'Enter {__name__} module, get_vaults method')
+
+    try:
+        vaults = vault_service.get_vaults(organization_id, request.data)
+        logger.debug(f'Exit {__name__} module, get_vaults method')
+        return Response(vaults)
+    except CustomApiException as e:
+        logger.error(f'Exit {__name__} module, get_vaults method')
+        raise CustomApiException(e.status_code, e.detail)
+
+
 @api_view(['GET', 'PUT'])
 def do_vault(request: HttpRequest, uid, vault_id):
     logger.debug(f'Enter {__name__} module, do_vault method')

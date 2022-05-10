@@ -140,12 +140,15 @@ def get_employee(request: HttpRequest):
         employee_serializer = EmployeeResponseSerializer(employee)
 
         response_employee = employee_serializer.data
+
         response_employee['organization_vaults'] \
             = VaultResponseSerializer(organization_level_vaults, many=True) \
             .data
+
         response_employee['project_vaults'] \
             = VaultResponseSerializer(project_level_vaults, many=True) \
             .data
+
         response_employee['individual_vaults'] \
             = VaultResponseSerializer(individual_level_vaults, many=True) \
             .data
@@ -172,49 +175,46 @@ def get_employee(request: HttpRequest):
         raise CustomApiException(404, 'No such employee exist')
 
 
+@api_view(['POST'])
+def get_employees(request: HttpRequest, organization_id):
+    """used to get all vaults from an organization
+    """
+    logger.info(f'Enter {__name__} module, {get_employees.__name__} method')
+
+    try:
+        organization = Organization.objects.get(
+            organization_id=organization_id, active=True,
+            email=request.data.get('email')
+        )
+
+        employees = Employee.objects.filter(organization=organization_id)
+
+        employee_serializer = EmployeeSerializer(employees, many=True)
+
+        return Response(employee_serializer.data)
+    except KeyError:
+        logger.error('Enter valid details')
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_employees.__name__} method')
+        raise CustomApiException(400, 'Enter valid details')
+    except Organization.DoesNotExist:
+        logger.error('No such organization exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_employees.__name__} method')
+        raise CustomApiException(404, 'No such organization exist')
+
+
 @api_view(['GET'])
 def check(request: HttpRequest):
-    employee_id = 1
+    employee_id = 5
 
-    query = f'SELECT * from cm_employee where employee_id={employee_id}'
+    query = f'SELECT * from cm_employee as e ' \
+            f'right join cm_vault_access as va ' \
+            f'on va.employee_id=e.employee_id ' \
+            f'where e.employee_id={employee_id}'
 
-    # employee = Employee.objects.raw(query)
-    # return Response(EmployeeSerializer(employee, many=True).data)
-
-    mydb = psycopg2.connect(
-        host="localhost",
-        user="postgres",
-        password="root",
-        database="credential_manager"
-    )
-
-    mycursor = mydb.cursor()
-
-    q = 'select * from cm_vault as v ' \
-        'left join cm_vault_access as va ' \
-        'on v.vault_id=va.vault_id ' \
-        'where va.vault_id=1 and va.organization_id=1 and va.employee_id=1'
-
-    mycursor.execute(q)
-
-    myresult = mycursor.fetchall()
-
-    print(myresult)
-
-    for i in myresult:
-        print(i)
-
-    employee = Employee.objects.get(employee_id=employee_id)
-    accesses = VaultAccess.objects.raw(
-        f'select * from cm_vault_access as va '
-        'inner join cm_vault as v '
-        'on v.vault_id=va.vault_id'
-    )
-
-    for i in accesses:
-        print(i)
-
-    return Response(EmployeeSerializer(employee, many=False).data)
+    employee = Employee.objects.raw(query)
+    return Response(EmployeeSerializer(employee, many=True).data)
 
 
 # @csrf_exempt

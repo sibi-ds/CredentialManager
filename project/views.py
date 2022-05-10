@@ -14,7 +14,7 @@ from files import file_reader
 from organization.models import Organization
 
 from project.models import Project
-from project.serializers import ProjectSerializer
+from project.serializers import ProjectSerializer, ProjectOnlySerializer
 
 from utils.api_exceptions import CustomApiException
 
@@ -67,6 +67,35 @@ def create_projects(request: HttpRequest):
     except Organization.DoesNotExist:
         logger.error('Organization not exist.Projects creation failure')
         logger.error(f'Exit {__name__} module, create_projects method')
+        raise CustomApiException(404, 'No such organization exist')
+
+
+@api_view(['POST'])
+def get_projects(request: HttpRequest, organization_id):
+    """used to get all vaults from an organization
+    """
+    logger.info(f'Enter {__name__} module, {get_projects.__name__} method')
+
+    try:
+        organization = Organization.objects.get(
+            organization_id=organization_id, active=True,
+            email=request.data.get('email')
+        )
+
+        projects = Project.objects.filter(organization=organization_id)
+
+        project_serializer = ProjectOnlySerializer(projects, many=True)
+
+        return Response(project_serializer.data)
+    except KeyError:
+        logger.error('Enter valid details')
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_projects.__name__} method')
+        raise CustomApiException(400, 'Enter valid details')
+    except Organization.DoesNotExist:
+        logger.error('No such organization exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_projects.__name__} method')
         raise CustomApiException(404, 'No such organization exist')
 
 

@@ -29,6 +29,8 @@ class OrganizationSerializer(serializers.ModelSerializer):
         instance.name = validated_data.get('name', instance.name)
         instance.email = validated_data.get('email', instance.email)
         instance.active = validated_data.get('active', instance.active)
+        instance.updated_by = validated_data.get('updated_by',
+                                                 'ADMIN')
 
         instance.save()
 

@@ -5,6 +5,7 @@ from credential import views
 
 urlpatterns = [
     path('', views.create_vault, name='create_vault'),
+    path('all', views.get_vaults, name='get_vaults'),
     path('<int:vault_id>', views.do_vault, name='do_vault'),
     path('<int:vault_id>/component', views.create_component,
          name='create_component'),

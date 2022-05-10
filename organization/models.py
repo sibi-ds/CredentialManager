@@ -5,9 +5,9 @@ from django.db import models
 
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
-    created_by = models.IntegerField(null=True, blank=True)
+    created_by = models.CharField(max_length=45, default='ADMIN')
     updated_at = models.DateTimeField(auto_now=True, blank=True)
-    updated_by = models.IntegerField(null=True, blank=True)
+    updated_by = models.CharField(max_length=45, null=True)
     active = models.BooleanField(default=True)
 
     class Meta:

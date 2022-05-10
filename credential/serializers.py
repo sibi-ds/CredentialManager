@@ -128,6 +128,15 @@ class VaultSerializer(serializers.ModelSerializer):
         return instance
 
 
+class VaultOnlySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Vault
+        fields = ('vault_id', 'name', 'description',
+                  'organization', 'active',
+                  'created_at', 'created_by', 'updated_at', 'updated_by')
+
+
 class VaultResponseSerializer(serializers.ModelSerializer):
 
     class Meta:

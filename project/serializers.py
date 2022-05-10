@@ -15,3 +15,12 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = '__all__'
+
+
+class ProjectOnlySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Project
+        fields = ('project_id', 'name', 'email', 'description',
+                  'organization', 'active',
+                  'created_at', 'created_by', 'updated_at', 'updated_by')
