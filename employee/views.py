@@ -1,21 +1,20 @@
 """this module is used to do employee related operations
 """
-import base64
 import logging
-import os
 
 from django.db import transaction
 from django.http import HttpRequest
-from django.contrib.auth.hashers import check_password, PBKDF2PasswordHasher, \
-    make_password, get_hashers, identify_hasher
-from utils.encryption_decryption import encrypt, decrypt, generate_key
+
+from employee.service import employee_service
+from utils.encryption_decryption import decrypt
 
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from credential.models import VaultAccess, Item
+from credential.models import VaultAccess
 from credential.serializers import VaultResponseSerializer
+
 from employee.models import Employee
 from employee.serializers import EmployeeSerializer, EmployeeResponseSerializer
 
@@ -27,6 +26,22 @@ from utils.api_exceptions import CustomApiException
 
 
 logger = logging.getLogger('credential-manager-logger')
+
+
+@api_view(['POST', ])
+def create_employee(request: HttpRequest):
+    """used to create employee in an organization
+    """
+    try:
+        logger.debug(f'Enter {__name__} module, create_employee method')
+        organization_id = request.query_params.get('organization_id')
+        employee = employee_service.create_employee(organization_id,
+                                                    request.data)
+        logger.debug(f'Exit {__name__} module, create_employee method')
+        return Response(employee)
+    except CustomApiException as e:
+        logger.error(f'Exit {__name__} module, create_employee method')
+        raise CustomApiException(e.status_code, e.detail)
 
 
 @api_view(['POST', ])
@@ -206,6 +221,22 @@ def get_employees(request: HttpRequest):
         logger.error(f'Exit {__name__} module, '
                      f'{get_employees.__name__} method')
         raise CustomApiException(404, 'No such organization exist')
+
+
+# @api_view(['PUT'])
+# def update_employee(request: HttpRequest, uid):
+#     """used to update employee details
+#     """
+#     try:
+#         logger.debug(f'Enter {__name__} module, update_employee method')
+#         organization_id = request.query_params.get('organization_id')
+#         employee = employee_service.update_employee(organization_id,
+#                                                     request.data)
+#         logger.debug(f'Exit {__name__} module, update_employee method')
+#         return Response(employee)
+#     except CustomApiException as e:
+#         logger.error(f'Exit {__name__} module, update_employee method')
+#         raise CustomApiException(e.status_code, e.detail)
 
 
 @api_view(['POST'])

@@ -15,6 +15,7 @@ from organization.models import Organization
 
 from project.models import Project
 from project.serializers import ProjectSerializer, ProjectOnlySerializer
+from project.service import project_service
 
 from utils.api_exceptions import CustomApiException
 
@@ -101,31 +102,17 @@ def get_projects(request: HttpRequest):
         raise CustomApiException(404, 'No such organization exist')
 
 
-@api_view(['POST'])
+@api_view(['POST', ])
 def create_project(request: HttpRequest):
     """used to create project in an organization
     """
     try:
-        logger.info(f'Enter {__name__} module, '
-                    'create_project method')
-        name = request.data.get("name")
-        email = request.data.get("email")
-        description = request.data.get("description")
-
-        project = Project.objects.create(name=name, email=email,
-                                         description=description)
-        project_serializer = ProjectSerializer(project)
-        logger.info('Project created successfully')
-        logger.info(f'Exit {__name__} module, '
-                    f'{create_project.__name__} method')
-        return Response(project_serializer.data)
-    except KeyError:
-        logger.error('Project creation failure')
-        logger.error(f'Exit {__name__} module, '
-                     f'{create_project.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
-    except IntegrityError:
-        logger.error('Project creation failure')
-        logger.error(f'Exit {__name__} module, '
-                     f'{create_project.__name__} method')
-        raise CustomApiException(400, 'Project email already exist')
+        logger.debug(f'Enter {__name__} module, create_project method')
+        organization_id = request.query_params.get('organization_id')
+        project = project_service.create_project(organization_id,
+                                                 request.data)
+        logger.debug(f'Exit {__name__} module, create_project method')
+        return Response(project)
+    except CustomApiException as e:
+        logger.error(f'Exit {__name__} module, create_project method')
+        raise CustomApiException(e.status_code, e.detail)
