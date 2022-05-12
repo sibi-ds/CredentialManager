@@ -15,4 +15,6 @@ urlpatterns = [
          name='create_vault_access'),
     path('<int:vault_id>/access/<int:vault_access_id>', views.do_vault_access,
          name='do_vault_access'),
+    path('<int:vault_id>/component/<int:component_id>/item/<int:item_id>',
+         views.decrypt_item, name='decrypt_item'),
 ]

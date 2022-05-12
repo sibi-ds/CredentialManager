@@ -8,13 +8,13 @@ from django.http import HttpRequest
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from credential.service import component_service
+from credential.service import component_service, item_service
 from credential.service import user_access_service
 from credential.service import vault_service
 from organization.models import Organization
 
 from utils.api_exceptions import CustomApiException
-
+from utils.encryption_decryption import decrypt
 
 logger = logging.getLogger('credential-manager-logger')
 
@@ -166,3 +166,20 @@ def do_vault_access(request: HttpRequest, uid, vault_id, vault_access_id):
         except CustomApiException as e:
             logger.error(f'Exit {__name__} module, do_vault_access method')
             raise CustomApiException(e.status_code, e.detail)
+
+
+@api_view(['POST'])
+def decrypt_item(request: HttpRequest, uid, vault_id, component_id, item_id):
+    logger.debug(f'Enter {__name__} module, decrypt_item method')
+
+    try:
+        organization_id = request.query_params.get('organization_id')
+
+        decrypted_item = item_service.decrypt_item(
+            request.data, organization_id, uid, vault_id,
+            component_id, item_id)
+        logger.debug(f'Exit {__name__} module, decrypt_item method')
+        return Response(decrypted_item)
+    except CustomApiException as e:
+        logger.error(f'Exit {__name__} module, decrypt_item method')
+        raise CustomApiException(e.status_code, e.detail)
