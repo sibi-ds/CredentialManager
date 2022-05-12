@@ -116,3 +116,38 @@ def create_project(request: HttpRequest):
     except CustomApiException as e:
         logger.error(f'Exit {__name__} module, create_project method')
         raise CustomApiException(e.status_code, e.detail)
+
+
+@api_view(['POST'])
+def assign_employee(request: HttpRequest, project_id):
+    """used to assign employee to a project
+    """
+    try:
+        logger.debug(f'Enter {__name__} module, assign_employee method')
+        organization_id = request.query_params.get('organization_id')
+        project = project_service.assign_employee(organization_id,
+                                                  project_id,
+                                                  request.data)
+        logger.debug(f'Exit {__name__} module, assign_employee method')
+        return Response(project)
+    except CustomApiException as e:
+        logger.error(f'Exit {__name__} module, assign_employee method')
+        raise CustomApiException(e.status_code, e.detail)
+
+
+@api_view(['POST'])
+def get_project(request: HttpRequest, project_id):
+    """used to get project details from an organization
+    """
+    logger.debug(f'Enter {__name__} module, get_project method')
+
+    try:
+        organization_id = request.query_params.get('organization_id')
+        project = project_service.get_project(organization_id,
+                                              project_id, request.data)
+        logger.debug(f'Exit {__name__} module, get_project method')
+        return Response(project)
+    except CustomApiException as e:
+        logger.error('Enter valid details')
+        logger.error(f'Exit {__name__} module, get_project method')
+        raise CustomApiException(400, 'Enter valid details')
