@@ -1,11 +1,12 @@
 """This module contains all model classes
 """
 from django.db import models
-from django_cryptography.fields import encrypt
 
 # from employee.models import EmployeeAccount
 from employee.models import Employee
+
 from organization.models import Organization
+
 from project.models import Project
 
 
@@ -24,6 +25,7 @@ class Vault(BaseModel):
 
     class Meta:
         db_table = 'cm_vault'
+        unique_together = (('organization', 'name'),)
 
     vault_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
@@ -45,12 +47,16 @@ class Vault(BaseModel):
                                    related_name='updated_vaults',
                                    null=True)
 
+    def __str__(self):
+        return self.name
+
 
 # model to define component of a vault
 class Component(BaseModel):
 
     class Meta:
         db_table = 'cm_component'
+        unique_together = (('organization', 'name'),)
 
     component_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
@@ -75,6 +81,9 @@ class Component(BaseModel):
                                    db_column='updated_by',
                                    related_name='updated_vault_components',
                                    null=True)
+
+    def __str__(self):
+        return self.name
 
 
 # model to define item of a component
@@ -107,6 +116,9 @@ class Item(BaseModel):
                                    db_column='updated_by',
                                    related_name='updated_component_items',
                                    null=True)
+
+    def __str__(self):
+        return self.key
 
 
 # model to define vault access for users or organization or project

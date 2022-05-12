@@ -24,3 +24,6 @@ class Organization(BaseModel):
     name = models.CharField(max_length=45, unique=True)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
+
+    def __str__(self):
+        return self.name

@@ -19,6 +19,7 @@ class Project(BaseModel):
 
     class Meta:
         db_table = 'cm_project'
+        unique_together = (('organization', 'name'), )
 
     project_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=45)
@@ -34,3 +35,6 @@ class Project(BaseModel):
                                    db_column='created_by',
                                    related_name='created_projects',
                                    on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name

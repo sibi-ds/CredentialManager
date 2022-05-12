@@ -44,6 +44,7 @@ class Employee(BaseModel):
 
     class Meta:
         db_table = 'cm_employee'
+        unique_together = (('organization', 'name'), )
 
     employee_id = models.AutoField(primary_key=True)
     employee_uid = models.UUIDField(default=uuid.uuid4, editable=False,
@@ -65,3 +66,6 @@ class Employee(BaseModel):
                                    db_column='created_by',
                                    related_name='created_employees',
                                    on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.email
