@@ -2,10 +2,11 @@
 """
 import os
 
-from cryptography.fernet import Fernet
 import base64
 import logging
 import traceback
+
+from cryptography.fernet import Fernet
 
 
 logger = logging.getLogger('credential-manager-logger')
@@ -39,6 +40,7 @@ def decrypt(pas, salt):
 
 
 def generate_key():
-    """used to generate random salt value
+    """used to generate random 32 character byte code
+    that can be used as salt value
     """
     return base64.urlsafe_b64encode(os.urandom(32))

@@ -20,12 +20,7 @@ urlpatterns = [
     path('organization/', include('organization.urls')),
     path('employee/', include('employee.urls')),
     path('project/', include('project.urls')),
-    path('organization/<int:organization_id>/vault/',
-         include('credential.urls')),
-    path('organization/<int:organization_id>/employee/',
-         include('employee.urls')),
-    path('organization/<int:organization_id>/project/',
-         include('project.urls')),
+    path('vault/', include('credential.urls')),
     path('user/<uuid:uid>/vault/', include('credential.urls')),
     path('admin/', admin.site.urls),
 ]

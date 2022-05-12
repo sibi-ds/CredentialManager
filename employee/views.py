@@ -177,13 +177,15 @@ def get_employee(request: HttpRequest):
         raise CustomApiException(404, 'No such employee exist')
 
 
-@api_view(['POST'])
-def get_employees(request: HttpRequest, organization_id):
+@api_view(['GET'])
+def get_employees(request: HttpRequest):
     """used to get all vaults from an organization
     """
     logger.info(f'Enter {__name__} module, {get_employees.__name__} method')
 
     try:
+        organization_id = request.query_params.get('organization_id')
+
         organization = Organization.objects.get(
             organization_id=organization_id, active=True,
             email=request.data.get('email')
@@ -208,19 +210,11 @@ def get_employees(request: HttpRequest, organization_id):
 
 @api_view(['POST'])
 def check(request: HttpRequest):
-
-    employee_id = request.data.get('employee_id')
     password = request.data.get('password')
     salt = request.data.get('salt')
+    salt = bytes(salt, 'utf-8')
 
-    item = Item.objects.get(item_id=15)
-
-    salt = bytes(item.salt, 'utf-8')
-    print(salt)
-
-    print(decrypt(item.value, salt))
-
-    return Response('ok')
+    return Response(decrypt(password, salt))
 
 
 # @csrf_exempt

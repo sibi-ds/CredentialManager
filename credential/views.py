@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from credential.service import component_service
 from credential.service import user_access_service
 from credential.service import vault_service
+from organization.models import Organization
 
 from utils.api_exceptions import CustomApiException
 
@@ -32,11 +33,12 @@ def create_vault(request: HttpRequest, uid):
         raise CustomApiException(e.status_code, e.detail)
 
 
-@api_view(['POST'])
-def get_vaults(request: HttpRequest, organization_id):
+@api_view(['GET'])
+def get_vaults(request: HttpRequest):
     logger.debug(f'Enter {__name__} module, get_vaults method')
 
     try:
+        organization_id = request.query_params.get('organization_id')
         vaults = vault_service.get_vaults(organization_id, request.data)
         logger.debug(f'Exit {__name__} module, get_vaults method')
         return Response(vaults)

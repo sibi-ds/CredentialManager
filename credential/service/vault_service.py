@@ -2,17 +2,19 @@
 """
 import logging
 
+from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 from credential.models import Vault
 
 from credential.serializers import VaultSerializer, VaultResponseSerializer, \
-    VaultOnlySerializer
+    VaultOnlySerializer, VaultAccessSerializer
 from credential.service import user_access_service
 
 from employee.models import Employee
 
 from organization.models import Organization
+from project.models import Project
 
 from utils.api_exceptions import CustomApiException
 
@@ -20,10 +22,11 @@ from utils.api_exceptions import CustomApiException
 logger = logging.getLogger('credential-manager-logger')
 
 
+@transaction.atomic
 def create_vault(organization_id, uid, data):
     """used to create vault in an organization
     """
-    logger.info(f'Enter {__name__} module, {create_vault.__name__} method')
+    logger.debug(f'Enter {__name__} module, {create_vault.__name__} method')
 
     try:
         organization = Organization.objects.get(
@@ -39,12 +42,41 @@ def create_vault(organization_id, uid, data):
         data['created_by'] = employee.employee_id
         data['organization'] = organization_id
 
+        access_level = data.pop('access_level')
+        scope = data.pop('scope')
+
+        vault_access_data = {
+            'access_level': access_level, 'scope': scope,
+            'organization': organization_id,
+            'created_by': employee.employee_id,
+        }
+
+        if access_level == 'PROJECT':
+            project = Project.objects.get(
+                project_id=data.pop('project'), active=True,
+                organization=organization
+            )
+
+            vault_access_data['project'] = project.project_id
+        elif access_level == 'INDIVIDUAL':
+            accessing_employee = Employee.objects.get(
+                email=data.pop('employee'), active=True,
+                organization=organization
+            )
+
+            vault_access_data['employee'] = accessing_employee.employee_id
+
         vault_serializer = VaultSerializer(data=data)
-        vault_serializer.is_valid(raise_exception=True)
+        vault_serializer.is_valid(raise_exception=False)
         vault_serializer.save()
 
-        logger.info('Vault creation successful')
-        logger.info(f'Exit {__name__} module, {create_vault.__name__} method')
+        vault_access_data['vault'] = vault_serializer.data['vault_id']
+        vault_access_serializer = VaultAccessSerializer(data=vault_access_data)
+        vault_access_serializer.is_valid(raise_exception=True)
+        vault_access_serializer.save()
+
+        logger.debug('Vault creation successful')
+        logger.debug(f'Exit {__name__} module, {create_vault.__name__} method')
 
         return vault_serializer.data
     except (ValidationError, KeyError):
@@ -64,7 +96,7 @@ def create_vault(organization_id, uid, data):
 def get_vaults(organization_id, data):
     """used to get all vaults from an organization
     """
-    logger.info(f'Enter {__name__} module, {get_vaults.__name__} method')
+    logger.debug(f'Enter {__name__} module, {get_vaults.__name__} method')
 
     try:
         organization = Organization.objects.get(
@@ -72,9 +104,14 @@ def get_vaults(organization_id, data):
             email=data.get('email')
         )
 
-        vaults = Vault.objects.filter(organization=organization_id)
+        vaults = Vault.objects.filter(
+            organization=organization.organization_id,
+            organization__active=True
+        )
 
         vault_serializer = VaultOnlySerializer(vaults, many=True)
+
+        logger.debug(f'Exit {__name__} module, {get_vaults.__name__} method')
 
         return vault_serializer.data
     except KeyError:
@@ -90,7 +127,7 @@ def get_vaults(organization_id, data):
 def get_vault(organization_id, uid, vault_id):
     """used to get vault from an organization
     """
-    logger.info(f'Enter {__name__} module, {get_vault.__name__} method')
+    logger.debug(f'Enter {__name__} module, {get_vault.__name__} method')
 
     try:
         organization = Organization.objects.get(
@@ -110,7 +147,7 @@ def get_vault(organization_id, uid, vault_id):
         if user_access_service.has_vault_access(organization_id, employee,
                                                 vault_id):
             vault_serializer = VaultSerializer(vault)
-            logger.info(f'Exit {__name__} module, '
+            logger.debug(f'Exit {__name__} module, '
                         f'{get_vault.__name__} method')
             return vault_serializer.data
         else:
@@ -143,7 +180,7 @@ def get_vault(organization_id, uid, vault_id):
 def update_vault(organization_id, uid, vault_id, data):
     """used to update vault details
     """
-    logger.info(f'Enter {__name__} module, {update_vault.__name__} method')
+    logger.debug(f'Enter {__name__} module, {update_vault.__name__} method')
 
     try:
         organization = Organization.objects.get(
@@ -160,8 +197,9 @@ def update_vault(organization_id, uid, vault_id, data):
             organization=organization,
         )
 
-        if user_access_service.can_update_vault(organization_id, employee,
-                                                vault_id):
+        if vault.created_by.employee_id == employee.employee_id \
+            or user_access_service.can_update_vault(organization_id, employee,
+                                                    vault_id):
             data['updated_by'] = employee.employee_id
             vault_serializer = VaultSerializer(vault, data=data, partial=True)
             vault_serializer.is_valid(raise_exception=True)

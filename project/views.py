@@ -70,13 +70,15 @@ def create_projects(request: HttpRequest):
         raise CustomApiException(404, 'No such organization exist')
 
 
-@api_view(['POST'])
-def get_projects(request: HttpRequest, organization_id):
+@api_view(['GET'])
+def get_projects(request: HttpRequest):
     """used to get all vaults from an organization
     """
     logger.info(f'Enter {__name__} module, {get_projects.__name__} method')
 
     try:
+        organization_id = request.query_params.get('organization_id')
+
         organization = Organization.objects.get(
             organization_id=organization_id, active=True,
             email=request.data.get('email')

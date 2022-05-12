@@ -109,29 +109,6 @@ class VaultSerializer(serializers.ModelSerializer):
                   'organization', 'components', 'active',
                   'created_at', 'created_by', 'updated_at', 'updated_by')
 
-    # override create method for hashing password of a vault
-    def create(self, validated_data):
-        name = validated_data.get('name')
-        description = validated_data.get('description')
-        organization = validated_data.get('organization')
-        created_by = validated_data.get('created_by')
-
-        vault = Vault.objects.create(name=name, description=description,
-                                     organization=organization,
-                                     created_by=created_by)
-
-        vault.password = make_password(validated_data.get('password'))
-        vault.save()
-
-        vault_access = VaultAccess.objects.create(
-            vault=vault,
-            organization=organization,
-            created_by=vault.created_by,
-            scope='READ/WRITE'
-        )
-
-        return vault
-
     # override update method
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
