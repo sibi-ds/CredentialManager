@@ -42,8 +42,8 @@ def create_vault(organization_id, uid, data):
         data['created_by'] = employee.employee_id
         data['organization'] = organization_id
 
-        access_level = data.pop('access_level')
-        scope = data.pop('scope')
+        access_level = data.pop('access_level', None)
+        scope = data.pop('scope', None)
 
         vault_access_data = {
             'access_level': access_level, 'scope': scope,

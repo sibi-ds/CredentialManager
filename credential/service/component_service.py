@@ -8,8 +8,8 @@ from rest_framework.exceptions import ValidationError
 from credential.models import Component
 from credential.models import Vault
 
-from credential.serializers import ComponentSerializer, \
-    ComponentResponseSerializer
+from credential.serializers import ComponentResponseSerializer
+from credential.serializers import ComponentSerializer
 from credential.service import user_access_service
 
 from employee.models import Employee

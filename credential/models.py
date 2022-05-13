@@ -129,24 +129,20 @@ class VaultAccess(BaseModel):
 
     vault_access_id = models.AutoField(primary_key=True)
 
-    access_levels = (
+    access_levels = [
         ("INDIVIDUAL", "INDIVIDUAL"),
         ("PROJECT", "PROJECT"),
         ("ORGANIZATION", "ORGANIZATION"),
-    )
+    ]
 
-    access_level = models.CharField(choices=access_levels,
-                                    null=True,
-                                    max_length=20)
+    access_level = models.CharField(choices=access_levels, max_length=20)
 
-    scopes = (
+    scopes = [
         ('READ', 'READ'),
         ('READ/WRITE', 'READ/WRITE'),
-    )
+    ]
 
-    scope = models.CharField(choices=scopes,
-                             default='READ',
-                             max_length=20)
+    scope = models.CharField(choices=scopes, default='READ', max_length=20)
 
     vault = models.ForeignKey(Vault, on_delete=models.CASCADE)
 
