@@ -5,6 +5,7 @@ import logging
 from rest_framework.exceptions import ValidationError
 
 from employee.models import Employee
+
 from project.models import Project
 from project.serializers import ProjectSerializer
 
@@ -67,7 +68,7 @@ def get_project(organization_id, project_id, data):
             project_id=project_id, active=True,
         )
 
-        email = data.get('employee')
+        email = data.get('email')
 
         employee = Employee.objects.get(
             organization=organization, organization__active=True,
@@ -118,7 +119,7 @@ def assign_employee(organization_id, project_id, data):
             project_id=project_id, active=True,
         )
 
-        email = data.get('employee')
+        email = data.get('email')
 
         employee = Employee.objects.get(
             organization=organization, organization__active=True,

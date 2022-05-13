@@ -148,6 +148,5 @@ def get_project(request: HttpRequest, project_id):
         logger.debug(f'Exit {__name__} module, get_project method')
         return Response(project)
     except CustomApiException as e:
-        logger.error('Enter valid details')
         logger.error(f'Exit {__name__} module, get_project method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(e.status_code, e.detail)

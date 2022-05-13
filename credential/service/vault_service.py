@@ -67,15 +67,19 @@ def create_vault(organization_id, uid, data):
             vault_access_data['employee'] = accessing_employee.employee_id
 
         vault_serializer = VaultSerializer(data=data)
-        vault_serializer.is_valid(raise_exception=False)
+        vault_serializer.is_valid(raise_exception=True)
         vault_serializer.save()
-
-        vault_access_data['vault'] = vault_serializer.data['vault_id']
-        vault_access_serializer = VaultAccessSerializer(data=vault_access_data)
-        vault_access_serializer.is_valid(raise_exception=True)
-        vault_access_serializer.save()
-
         logger.debug('Vault creation successful')
+
+        if access_level is not None:
+            vault_access_data['vault'] = vault_serializer.data['vault_id']
+            vault_access_serializer = VaultAccessSerializer(
+                data=vault_access_data
+            )
+            vault_access_serializer.is_valid(raise_exception=True)
+            vault_access_serializer.save()
+            logger.debug('Vault access creation successful')
+
         logger.debug(f'Exit {__name__} module, {create_vault.__name__} method')
 
         return vault_serializer.data
