@@ -151,9 +151,6 @@ def has_vault_access(organization_id, employee, vault_id):
     logger.debug(f'Enter {__name__} module, '
                  f'{has_vault_access.__name__} method')
 
-    admin_vault_access = get_admin_vault_access(
-        organization_id, employee.employee_id, vault_id)
-
     organization_vault_access = get_organization_vault_access(
         organization_id, vault_id)
 
@@ -163,8 +160,7 @@ def has_vault_access(organization_id, employee, vault_id):
     individual_vault_access = get_individual_vault_access(
         organization_id, employee.employee_id, vault_id)
 
-    if admin_vault_access is not None \
-            or organization_vault_access is not None \
+    if organization_vault_access is not None \
             or project_vault_access is not None \
             or individual_vault_access is not None:
 
@@ -185,9 +181,6 @@ def can_update_vault(organization_id, employee, vault_id):
     logger.debug(f'Enter {__name__} module, '
                  f'{has_vault_access.__name__} method')
 
-    admin_vault_access = get_admin_vault_access(
-        organization_id, employee.employee_id, vault_id)
-
     organization_vault_access = get_organization_vault_access(
         organization_id, vault_id)
 
@@ -197,10 +190,7 @@ def can_update_vault(organization_id, employee, vault_id):
     individual_vault_access = get_individual_vault_access(
         organization_id, employee.employee_id, vault_id)
 
-    if (admin_vault_access is not None
-            and admin_vault_access.created_by.employee_id
-            == employee.employee_id) \
-        or (organization_vault_access is not None
+    if (organization_vault_access is not None
             and organization_vault_access.scope == 'READ/WRITE') \
         or (project_vault_access is not None
             and project_vault_access.scope == 'READ/WRITE') \
@@ -474,8 +464,7 @@ def update_vault_access(organization_id, uid, vault_id, vault_access_id, data):
         vault_access_serializer = VaultAccessSerializer(instance=vault_access,
                                                         data=data,
                                                         partial=True)
-        vault_access_serializer.is_valid(raise_exception=False)
-        print(vault_access_serializer.errors)
+        vault_access_serializer.is_valid(raise_exception=True)
         vault_access_serializer.save()
 
         logger.debug('Vault access updated successfully')
@@ -488,6 +477,11 @@ def update_vault_access(organization_id, uid, vault_id, vault_access_id, data):
         logger.error(f'Exit {__name__} module, '
                      f'{update_vault_access.__name__} method')
         raise CustomApiException(404, 'No vault access found')
+    except ValidationError:
+        logger.error('Entered details are not valid')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_vault_access.__name__} method')
+        raise CustomApiException(400, 'Enter valid details')
 
 
 def delete_vault_access(organization_id, uid, vault_id, vault_access_id):

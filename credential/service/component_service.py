@@ -45,8 +45,9 @@ def create_component(organization_id, uid, vault_id, data):
             organization__active=True
         )
 
-        if user_access_service.can_update_vault(organization_id, employee,
-                                                vault_id):
+        if vault.created_by.employee_id == employee.employee_id \
+                or user_access_service.can_update_vault(organization_id,
+                                                        employee, vault_id):
             data['vault'] = vault.vault_id
             data['organization'] = organization.organization_id
             data['created_by'] = employee.employee_id
@@ -120,8 +121,9 @@ def get_component(organization_id, uid, vault_id, component_id, data):
             organization=organization
         )
 
-        if user_access_service.has_vault_access(organization_id, employee,
-                                                vault_id):
+        if vault.created_by.employee_id == employee.employee_id \
+            or user_access_service.has_vault_access(organization_id, employee,
+                                                    vault_id):
             component_serializer = ComponentResponseSerializer(component)
             logger.debug(f'Exit {__name__} module, '
                          f'{get_component.__name__} method')
@@ -188,8 +190,9 @@ def update_component(organization_id, uid, vault_id, component_id, data):
             organization=organization,
         )
 
-        if user_access_service.can_update_vault(organization_id, employee,
-                                                vault_id):
+        if vault.created_by.employee_id == employee.employee_id \
+                or user_access_service.can_update_vault(organization_id,
+                                                        employee, vault_id):
             data['updated_by'] = employee.employee_id
             component_serializer = ComponentSerializer(component, data=data,
                                                        partial=True)

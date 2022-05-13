@@ -148,8 +148,9 @@ def get_vault(organization_id, uid, vault_id):
             organization=organization,
         )
 
-        if user_access_service.has_vault_access(organization_id, employee,
-                                                vault_id):
+        if vault.created_by.employee_id == employee.employee_id \
+                or user_access_service.has_vault_access(organization_id,
+                                                        employee, vault_id):
             vault_serializer = VaultSerializer(vault)
             logger.debug(f'Exit {__name__} module, '
                         f'{get_vault.__name__} method')
