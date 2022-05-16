@@ -1,5 +1,7 @@
 """this module contains model for project details
 """
+import uuid
+
 from django.db import models
 
 from organization.models import Organization
@@ -22,6 +24,8 @@ class Project(BaseModel):
         unique_together = (('organization', 'name'), )
 
     project_id = models.AutoField(primary_key=True)
+    project_uid = models.UUIDField(default=uuid.uuid4, editable=False,
+                                   unique=True)
     name = models.CharField(max_length=45)
     email = models.EmailField(max_length=45, unique=True)
     description = models.TextField()

@@ -1,5 +1,7 @@
 """This module contains all model classes
 """
+import uuid
+
 from django.db import models
 
 # from employee.models import EmployeeAccount
@@ -28,6 +30,8 @@ class Vault(BaseModel):
         unique_together = (('organization', 'name'),)
 
     vault_id = models.AutoField(primary_key=True)
+    vault_uid = models.UUIDField(default=uuid.uuid4, editable=False,
+                                 unique=True)
     name = models.CharField(max_length=45)
     description = models.TextField()
 
@@ -59,6 +63,8 @@ class Component(BaseModel):
         unique_together = (('organization', 'name'),)
 
     component_id = models.AutoField(primary_key=True)
+    component_uid = models.UUIDField(default=uuid.uuid4, editable=False,
+                                     unique=True)
     name = models.CharField(max_length=45)
     description = models.TextField()
 
@@ -93,6 +99,8 @@ class Item(BaseModel):
         db_table = 'cm_item'
 
     item_id = models.AutoField(primary_key=True)
+    item_uid = models.UUIDField(default=uuid.uuid4, editable=False,
+                                unique=True)
     key = models.CharField(max_length=45)
     value = models.CharField(max_length=136)
     salt = models.CharField(max_length=44)

@@ -21,14 +21,17 @@ def decrypt_item(data, organization_id, uid, vault_id, component_id, item_id):
     logger.debug(f'Enter {__name__} module, {get_item.__name__} method')
 
     try:
-        value = data.get('value')
-        salt = bytes(data.get('salt'), 'utf-8')
+        value = data.get('value', None)
+        salt = data.get('salt', None)
 
         item = get_item(data, organization_id, uid, vault_id,
                         component_id, item_id)
 
-        value = item.value
-        salt = bytes(item.salt, 'utf-8')
+        if value is None or salt is None:
+            value = item.value
+            salt = bytes(item.salt, 'utf-8')
+        else:
+            salt = bytes(salt, 'utf-8')
 
         decrypted_value = decrypt(value, salt)
 
@@ -75,8 +78,9 @@ def get_item(data, organization_id, uid, vault_id, component_id, item_id):
             organization=organization
         )
 
-        if user_access_service.has_vault_access(organization_id, employee,
-                                                vault_id):
+        if vault.created_by.employee_id == employee.employee_id \
+                or user_access_service.has_vault_access(organization_id,
+                                                        employee, vault_id):
             logger.debug(f'Exit {__name__} module, '
                          f'{get_item.__name__} method')
             return item

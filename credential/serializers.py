@@ -27,8 +27,8 @@ class ComponentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Component
-        fields = ('component_id', 'name', 'description', 'active',
-                  'organization', 'vault', 'items',
+        fields = ('component_id', 'component_uid', 'name', 'description',
+                  'active', 'organization', 'vault', 'items',
                   'created_at', 'created_by', 'updated_at', 'updated_by')
 
     # override create method for nested objects creation
@@ -105,7 +105,7 @@ class VaultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vault
-        fields = ('vault_id', 'name', 'description',
+        fields = ('vault_id', 'vault_uid', 'name', 'description',
                   'organization', 'components', 'active',
                   'created_at', 'created_by', 'updated_at', 'updated_by')
 
@@ -125,7 +125,7 @@ class VaultOnlySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vault
-        fields = ('vault_id', 'name', 'description',
+        fields = ('vault_id', 'vault_uid', 'name', 'description',
                   'organization', 'active',
                   'created_at', 'created_by', 'updated_at', 'updated_by')
 
@@ -134,7 +134,7 @@ class VaultResponseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vault
-        fields = ('vault_id', 'name', 'description',
+        fields = ('vault_id', 'vault_uid', 'name', 'description',
                   'organization', 'active',)
 
 
