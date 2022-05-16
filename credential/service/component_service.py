@@ -22,7 +22,7 @@ from utils.api_exceptions import CustomApiException
 logger = logging.getLogger('credential-manager-logger')
 
 
-def create_component(organization_id, uid, vault_id, data):
+def create_component(organization_id, uid, vault_uid, data):
     """used to create component for a vault
     """
     logger.debug(f'Enter {__name__} module, '
@@ -34,7 +34,7 @@ def create_component(organization_id, uid, vault_id, data):
         )
 
         vault = Vault.objects.get(
-            vault_id=vault_id, active=True,
+            vault_uid=vault_uid, active=True,
             organization=organization,
             organization__active=True,
         )
@@ -47,7 +47,8 @@ def create_component(organization_id, uid, vault_id, data):
 
         if vault.created_by.employee_id == employee.employee_id \
                 or user_access_service.can_update_vault(organization_id,
-                                                        employee, vault_id):
+                                                        employee,
+                                                        vault.vault_id):
             data['vault'] = vault.vault_id
             data['organization'] = organization.organization_id
             data['created_by'] = employee.employee_id
@@ -83,7 +84,7 @@ def create_component(organization_id, uid, vault_id, data):
         raise CustomApiException(400, 'No such organization exist')
     except Vault.DoesNotExist:
         logger.error(f'Component creation failure. '
-                     f'Vault with Vault ID:  {vault_id} not exist')
+                     f'Vault with Vault UID:  {vault_uid} not exist')
         logger.error(f'Exit {__name__} module, '
                      f'{create_component.__name__} method')
         raise CustomApiException(400, 'No such vault exist')
@@ -94,7 +95,7 @@ def create_component(organization_id, uid, vault_id, data):
         raise CustomApiException(404, 'No such employee exist')
 
 
-def get_component(organization_id, uid, vault_id, component_id, data):
+def get_component(organization_id, uid, vault_uid, component_uid, data):
     """used to get component and its items from a vault
     """
     logger.debug(f'Enter {__name__} module, {get_component.__name__} method')
@@ -106,7 +107,7 @@ def get_component(organization_id, uid, vault_id, component_id, data):
         )
 
         vault = Vault.objects.get(
-            vault_id=vault_id, active=True,
+            vault_uid=vault_uid, active=True,
             organization=organization
         )
 
@@ -116,14 +117,14 @@ def get_component(organization_id, uid, vault_id, component_id, data):
         )
 
         component = Component.objects.get(
-            component_id=component_id,
+            component_uid=component_uid,
             vault=vault, vault__active=True,
             organization=organization
         )
 
         if vault.created_by.employee_id == employee.employee_id \
             or user_access_service.has_vault_access(organization_id, employee,
-                                                    vault_id):
+                                                    vault.vault_id):
             component_serializer = ComponentResponseSerializer(component)
             logger.debug(f'Exit {__name__} module, '
                          f'{get_component.__name__} method')
@@ -150,19 +151,20 @@ def get_component(organization_id, uid, vault_id, component_id, data):
                      f'{get_component.__name__} method')
         raise CustomApiException(404, 'No such employee exist')
     except Vault.DoesNotExist:
-        logger.error(f'Vault for Vault ID : {vault_id} is not exist')
+        logger.error(f'Vault for Vault UID : {vault_uid} is not exist')
         logger.error(f'Exit {__name__} module, '
                      f'{get_component.__name__} method')
         raise CustomApiException(404, 'No such vault exist')
     except Component.DoesNotExist:
-        logger.error(f'Component for Component ID : {component_id} '
+        logger.error(f'Component for Component UID : {component_uid} '
                      f'is not exist')
         logger.error(f'Exit {__name__} module, '
                      f'{get_component.__name__} method')
         raise CustomApiException(404, 'No such component exist')
 
 
-def update_component(organization_id, uid, vault_id, component_id, data):
+def update_component(organization_id, employee_uid, vault_uid, component_uid,
+                     data):
     """used to update component details and items
     """
     logger.debug(f'Enter {__name__} module, '
@@ -175,24 +177,25 @@ def update_component(organization_id, uid, vault_id, component_id, data):
         )
 
         vault = Vault.objects.get(
-            vault_id=vault_id, active=True,
+            vault_uid=vault_uid, active=True,
             organization=organization
         )
 
         employee = Employee.objects.get(
-            employee_uid=uid, active=True,
+            employee_uid=employee_uid, active=True,
             organization=organization,
         )
 
         component = Component.objects.get(
-            component_id=component_id,
+            component_uid=component_uid,
             vault=vault, vault__active=True,
             organization=organization,
         )
 
         if vault.created_by.employee_id == employee.employee_id \
                 or user_access_service.can_update_vault(organization_id,
-                                                        employee, vault_id):
+                                                        employee,
+                                                        vault.vault_id):
             data['updated_by'] = employee.employee_id
             component_serializer = ComponentSerializer(component, data=data,
                                                        partial=True)
@@ -223,13 +226,13 @@ def update_component(organization_id, uid, vault_id, component_id, data):
                      f'{update_component.__name__} method')
         raise CustomApiException(404, 'No such vault exist')
     except Component.DoesNotExist:
-        logger.error(f'Component for Component ID : {component_id} '
+        logger.error(f'Component for Component UID : {component_uid} '
                      f'is not exist')
         logger.error(f'Exit {__name__} module, '
                      f'{update_component.__name__} method')
         raise CustomApiException(404, 'No such component exist')
     except Employee.DoesNotExist:
-        logger.error(f'vault for Employee UID : {uid} is not exist')
+        logger.error(f'vault for Employee UID : {employee_uid} is not exist')
         logger.error(f'Exit {__name__} module, '
                      f'{update_component.__name__} method')
         raise CustomApiException(404, 'No such employee exist')

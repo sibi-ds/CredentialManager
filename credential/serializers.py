@@ -16,7 +16,7 @@ class ItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Item
-        fields = ('item_id', 'key', 'value', 'salt', 'active',
+        fields = ('item_id', 'item_uid', 'key', 'value', 'salt', 'active',
                   'component', 'organization',
                   'created_at', 'created_by', 'updated_at', 'updated_by')
         read_only_fields = ('component',)
@@ -87,8 +87,8 @@ class ComponentResponseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Component
-        fields = ('component_id', 'name', 'description', 'active',
-                  'organization', 'vault', 'items',
+        fields = ('component_id', 'component_uid', 'name', 'description',
+                  'active', 'organization', 'vault', 'items',
                   'created_at', 'created_by', 'updated_at', 'updated_by')
 
 

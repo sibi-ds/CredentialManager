@@ -52,7 +52,7 @@ def create_project(organization_id, data):
         raise CustomApiException(404, 'No such organization exist')
 
 
-def get_project(organization_id, project_id, data):
+def get_project(organization_id, project_uid, data):
     """used to get project from an organization
     """
     try:
@@ -65,7 +65,7 @@ def get_project(organization_id, project_id, data):
 
         project = Project.objects.get(
             organization=organization, organization__active=True,
-            project_id=project_id, active=True,
+            project_uid=project_uid, active=True,
         )
 
         email = data.get('email')
@@ -103,7 +103,7 @@ def get_project(organization_id, project_id, data):
         raise CustomApiException(404, 'No such employee exist')
 
 
-def assign_employee(organization_id, project_id, data):
+def assign_employee(organization_id, project_uid, data):
     """used to assign employee to a project
     """
     try:
@@ -116,7 +116,7 @@ def assign_employee(organization_id, project_id, data):
 
         project = Project.objects.get(
             organization=organization, organization__active=True,
-            project_id=project_id, active=True,
+            project_uid=project_uid, active=True,
         )
 
         email = data.get('email')

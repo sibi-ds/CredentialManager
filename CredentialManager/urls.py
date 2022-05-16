@@ -21,6 +21,6 @@ urlpatterns = [
     path('employee/', include('employee.urls')),
     path('project/', include('project.urls')),
     path('vault/', include('credential.urls')),
-    path('user/<uuid:uid>/vault/', include('credential.urls')),
+    path('user/<uuid:employee_uid>/vault/', include('credential.urls')),
     path('admin/', admin.site.urls),
 ]

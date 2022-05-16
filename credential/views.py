@@ -11,21 +11,21 @@ from rest_framework.response import Response
 from credential.service import component_service, item_service
 from credential.service import user_access_service
 from credential.service import vault_service
-from organization.models import Organization
 
 from utils.api_exceptions import CustomApiException
-from utils.encryption_decryption import decrypt
+
 
 logger = logging.getLogger('credential-manager-logger')
 
 
 @api_view(['POST'])
-def create_vault(request: HttpRequest, uid):
+def create_vault(request: HttpRequest, employee_uid):
     logger.debug(f'Enter {__name__} module, create_vault method')
 
     try:
         organization_id = request.query_params.get('organization_id')
-        vault = vault_service.create_vault(organization_id, uid, request.data)
+        vault = vault_service.create_vault(organization_id, employee_uid,
+                                           request.data)
         logger.debug(f'Exit {__name__} module, create_vault method')
         return Response(vault)
     except CustomApiException as e:
@@ -48,14 +48,15 @@ def get_vaults(request: HttpRequest):
 
 
 @api_view(['GET', 'PUT'])
-def do_vault(request: HttpRequest, uid, vault_id):
+def do_vault(request: HttpRequest, employee_uid, vault_uid):
     logger.debug(f'Enter {__name__} module, do_vault method')
 
     organization_id = request.query_params.get('organization_id')
 
     if request.method == 'GET':
         try:
-            vault = vault_service.get_vault(organization_id, uid, vault_id)
+            vault = vault_service.get_vault(organization_id, employee_uid,
+                                            vault_uid)
             logger.debug(f'Exit {__name__} module, do_vault method')
             return Response(vault)
         except CustomApiException as e:
@@ -64,8 +65,8 @@ def do_vault(request: HttpRequest, uid, vault_id):
 
     if request.method == 'PUT':
         try:
-            vault = vault_service.update_vault(organization_id, uid, vault_id,
-                                               request.data)
+            vault = vault_service.update_vault(organization_id, employee_uid,
+                                               vault_uid, request.data)
             logger.debug(f'Exit {__name__} module, do_vault method')
             return Response(vault)
         except CustomApiException as e:
@@ -74,13 +75,15 @@ def do_vault(request: HttpRequest, uid, vault_id):
 
 
 @api_view(['POST'])
-def create_component(request: HttpRequest, uid, vault_id):
+def create_component(request: HttpRequest, employee_uid, vault_uid):
     logger.debug(f'Enter {__name__} module, create_component method')
 
     try:
         organization_id = request.query_params.get('organization_id')
-        component = component_service.create_component(organization_id, uid,
-                                                       vault_id, request.data)
+        component = component_service.create_component(organization_id,
+                                                       employee_uid,
+                                                       vault_uid,
+                                                       request.data)
         logger.debug(f'Exit {__name__} module, create_component method')
         return Response(component)
     except CustomApiException as e:
@@ -89,15 +92,17 @@ def create_component(request: HttpRequest, uid, vault_id):
 
 
 @api_view(['GET', 'PUT'])
-def do_component(request: HttpRequest, uid, vault_id, component_id):
+def do_component(request: HttpRequest, employee_uid, vault_uid, component_uid):
     logger.debug(f'Enter {__name__} module, do_component method')
 
     organization_id = request.query_params.get('organization_id')
 
     if request.method == 'GET':
         try:
-            component = component_service.get_component(organization_id, uid,
-                                                        vault_id, component_id,
+            component = component_service.get_component(organization_id,
+                                                        employee_uid,
+                                                        vault_uid,
+                                                        component_uid,
                                                         request.data)
             logger.debug(f'Exit {__name__} module, do_component method')
             return Response(component)
@@ -108,9 +113,9 @@ def do_component(request: HttpRequest, uid, vault_id, component_id):
     if request.method == 'PUT':
         try:
             component = component_service.update_component(organization_id,
-                                                           uid,
-                                                           vault_id,
-                                                           component_id,
+                                                           employee_uid,
+                                                           vault_uid,
+                                                           component_uid,
                                                            request.data)
             logger.debug(f'Exit {__name__} module, do_component method')
             return Response(component)
@@ -120,14 +125,14 @@ def do_component(request: HttpRequest, uid, vault_id, component_id):
 
 
 @api_view(['POST'])
-def create_vault_access(request: HttpRequest, uid, vault_id):
+def create_vault_access(request: HttpRequest, employee_uid, vault_uid):
     logger.debug(f'Enter {__name__} module, create_vault_access method')
 
     organization_id = request.query_params.get('organization_id')
 
     try:
         vault_access = user_access_service.create_vault_access(
-            organization_id, uid, vault_id, request.data
+            organization_id, employee_uid, vault_uid, request.data
         )
 
         logger.debug(f'Exit {__name__} module, create_vault_access method')
@@ -138,7 +143,8 @@ def create_vault_access(request: HttpRequest, uid, vault_id):
 
 
 @api_view(['PUT', 'DELETE'])
-def do_vault_access(request: HttpRequest, uid, vault_id, vault_access_id):
+def do_vault_access(request: HttpRequest, employee_uid, vault_uid,
+                    vault_access_id):
     logger.debug(f'Enter {__name__} module, do_vault_access method')
 
     organization_id = request.query_params.get('organization_id')
@@ -146,7 +152,8 @@ def do_vault_access(request: HttpRequest, uid, vault_id, vault_access_id):
     if request.method == 'PUT':
         try:
             vault_access = user_access_service.update_vault_access(
-                organization_id, uid, vault_id, vault_access_id, request.data
+                organization_id, employee_uid, vault_uid, vault_access_id,
+                request.data
             )
 
             logger.debug(f'Exit {__name__} module, do_vault_access method')
@@ -158,7 +165,7 @@ def do_vault_access(request: HttpRequest, uid, vault_id, vault_access_id):
     if request.method == 'DELETE':
         try:
             vault_access = user_access_service.delete_vault_access(
-                organization_id, uid, vault_id, vault_access_id
+                organization_id, employee_uid, vault_uid, vault_access_id
             )
 
             logger.debug(f'Exit {__name__} module, do_vault_access method')
@@ -169,15 +176,16 @@ def do_vault_access(request: HttpRequest, uid, vault_id, vault_access_id):
 
 
 @api_view(['POST'])
-def decrypt_item(request: HttpRequest, uid, vault_id, component_id, item_id):
+def decrypt_item(request: HttpRequest, employee_uid, vault_uid, component_uid,
+                 item_uid):
     logger.debug(f'Enter {__name__} module, decrypt_item method')
 
     try:
         organization_id = request.query_params.get('organization_id')
 
         decrypted_item = item_service.decrypt_item(
-            request.data, organization_id, uid, vault_id,
-            component_id, item_id)
+            request.data, organization_id, employee_uid, vault_uid,
+            component_uid, item_uid)
         logger.debug(f'Exit {__name__} module, decrypt_item method')
         return Response(decrypted_item)
     except CustomApiException as e:

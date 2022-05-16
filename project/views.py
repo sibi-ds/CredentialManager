@@ -119,14 +119,14 @@ def create_project(request: HttpRequest):
 
 
 @api_view(['POST'])
-def assign_employee(request: HttpRequest, project_id):
+def assign_employee(request: HttpRequest, project_uid):
     """used to assign employee to a project
     """
     try:
         logger.debug(f'Enter {__name__} module, assign_employee method')
         organization_id = request.query_params.get('organization_id')
         project = project_service.assign_employee(organization_id,
-                                                  project_id,
+                                                  project_uid,
                                                   request.data)
         logger.debug(f'Exit {__name__} module, assign_employee method')
         return Response(project)
@@ -136,7 +136,7 @@ def assign_employee(request: HttpRequest, project_id):
 
 
 @api_view(['POST'])
-def get_project(request: HttpRequest, project_id):
+def get_project(request: HttpRequest, project_uid):
     """used to get project details from an organization
     """
     logger.debug(f'Enter {__name__} module, get_project method')
@@ -144,7 +144,7 @@ def get_project(request: HttpRequest, project_id):
     try:
         organization_id = request.query_params.get('organization_id')
         project = project_service.get_project(organization_id,
-                                              project_id, request.data)
+                                              project_uid, request.data)
         logger.debug(f'Exit {__name__} module, get_project method')
         return Response(project)
     except CustomApiException as e:

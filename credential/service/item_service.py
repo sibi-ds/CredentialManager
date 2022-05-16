@@ -15,7 +15,8 @@ from utils.encryption_decryption import decrypt
 logger = logging.getLogger('credential-manager-logger')
 
 
-def decrypt_item(data, organization_id, uid, vault_id, component_id, item_id):
+def decrypt_item(data, organization_id, employee_uid, vault_uid,
+                 component_uid, item_uid):
     """used to get decrypted value
     """
     logger.debug(f'Enter {__name__} module, {get_item.__name__} method')
@@ -24,8 +25,8 @@ def decrypt_item(data, organization_id, uid, vault_id, component_id, item_id):
         value = data.get('value', None)
         salt = data.get('salt', None)
 
-        item = get_item(data, organization_id, uid, vault_id,
-                        component_id, item_id)
+        item = get_item(data, organization_id, employee_uid, vault_uid,
+                        component_uid, item_uid)
 
         if value is None or salt is None:
             value = item.value
@@ -45,7 +46,8 @@ def decrypt_item(data, organization_id, uid, vault_id, component_id, item_id):
         raise CustomApiException(e.status_code, e.detail)
 
 
-def get_item(data, organization_id, uid, vault_id, component_id, item_id):
+def get_item(data, organization_id, employee_uid, vault_uid, component_uid,
+             item_uid):
     """used to get item
     """
     logger.debug(f'Enter {__name__} module, {get_item.__name__} method')
@@ -57,30 +59,31 @@ def get_item(data, organization_id, uid, vault_id, component_id, item_id):
         )
 
         vault = Vault.objects.get(
-            vault_id=vault_id, active=True,
+            vault_uid=vault_uid, active=True,
             organization=organization
         )
 
         employee = Employee.objects.get(
-            employee_uid=uid, active=True,
+            employee_uid=employee_uid, active=True,
             organization=organization,
         )
 
         component = Component.objects.get(
-            component_id=component_id,
+            component_uid=component_uid,
             vault=vault, vault__active=True,
             organization=organization
         )
 
         item = Item.objects.get(
-            item_id=item_id, active=True,
+            item_uid=item_uid, active=True,
             component=component, component__active=True,
             organization=organization
         )
 
         if vault.created_by.employee_id == employee.employee_id \
                 or user_access_service.has_vault_access(organization_id,
-                                                        employee, vault_id):
+                                                        employee,
+                                                        vault.vault_id):
             logger.debug(f'Exit {__name__} module, '
                          f'{get_item.__name__} method')
             return item
@@ -101,23 +104,23 @@ def get_item(data, organization_id, uid, vault_id, component_id, item_id):
                      f'{get_item.__name__} method')
         raise CustomApiException(400, 'No such organization exist')
     except Employee.DoesNotExist:
-        logger.error(f'vault for Employee UID : {uid} is not exist')
+        logger.error(f'vault for Employee UID : {employee_uid} is not exist')
         logger.error(f'Exit {__name__} module, '
                      f'{get_item.__name__} method')
         raise CustomApiException(404, 'No such employee exist')
     except Vault.DoesNotExist:
-        logger.error(f'Vault for Vault ID : {vault_id} is not exist')
+        logger.error(f'Vault for Vault UID : {vault_uid} is not exist')
         logger.error(f'Exit {__name__} module, '
                      f'{get_item.__name__} method')
         raise CustomApiException(404, 'No such vault exist')
     except Component.DoesNotExist:
-        logger.error(f'Component for Component ID : {component_id} '
+        logger.error(f'Component for Component UID : {component_uid} '
                      f'is not exist')
         logger.error(f'Exit {__name__} module, '
                      f'{get_item.__name__} method')
         raise CustomApiException(404, 'No such component exist')
     except Item.DoesNotExist:
-        logger.error(f'Item for Component ID : {item_id} '
+        logger.error(f'Item for Item UID : {item_uid} '
                      f'is not exist')
         logger.error(f'Exit {__name__} module, '
                      f'{get_item.__name__} method')
