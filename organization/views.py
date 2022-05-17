@@ -49,7 +49,7 @@ def get_organizations(request: HttpRequest):
 
 
 @api_view(['GET', 'PUT'])
-def do_organization(request: HttpRequest, organization_id):
+def do_organization(request: HttpRequest, organization_uid):
     logger.debug(f'Enter {__name__} module, do_organization method')
 
     if request.method == 'GET':
@@ -57,7 +57,7 @@ def do_organization(request: HttpRequest, organization_id):
             email = request.data.get("email")
 
             organization = Organization.objects.get(
-                organization_id=organization_id, email=email, active=True
+                organization_uid=organization_uid, email=email, active=True
             )
 
             organization_serializer = OrganizationSerializer(organization)
@@ -80,7 +80,7 @@ def do_organization(request: HttpRequest, organization_id):
             email = request.data.get("email")
 
             organization = Organization.objects.get(
-                organization_id=organization_id,
+                organization_uid=organization_uid,
                 email=email
             )
 

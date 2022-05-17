@@ -92,6 +92,10 @@ def create_vault(organization_id, uid, data):
         logger.error('Vault creation failure. No such employee exist')
         logger.error(f'Exit {__name__} module, {create_vault.__name__} method')
         raise CustomApiException(404, 'No such employee exist')
+    except Project.DoesNotExist:
+        logger.error('Vault creation failure. No such project exist')
+        logger.error(f'Exit {__name__} module, {create_vault.__name__} method')
+        raise CustomApiException(404, 'No such project exist')
     except Organization.DoesNotExist:
         logger.error('Vault creation failure. No such organization exist')
         logger.error(f'Exit {__name__} module, {create_vault.__name__} method')

@@ -10,7 +10,8 @@ from organization.models import Organization
 class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
-        fields = ('organization_id', 'name', 'email', 'active',
+        fields = ('organization_id', 'organization_uid',
+                  'name', 'email', 'active',
                   'created_at', 'created_by', 'updated_at', 'updated_by')
 
     # override create method for hashing password of a tenant

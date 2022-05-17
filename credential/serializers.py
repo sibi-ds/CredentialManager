@@ -67,7 +67,7 @@ class ComponentSerializer(serializers.ModelSerializer):
                 component_item = Item.objects.get(item_id=item_id,
                                                   component=instance)
                 component_item.key = item.get('key', component_item.key)
-                component_item.value = item.get('value', component_item.value)
+                # component_item.value = item.get('value', component_item.value)
                 component_item.active = \
                     item.get('active', component_item.active)
                 component_item.updated_by = component_item.created_by
@@ -76,6 +76,10 @@ class ComponentSerializer(serializers.ModelSerializer):
                 component_item.updated_by = validated_data['updated_by']
                 component_item.save()
             else:
+                salt = generate_key()
+                item['value'] = encrypt(item.get('value'), salt)
+                item['salt'] = salt.decode('utf-8')
+
                 Item.objects.create(component=instance, **item,
                                     created_by=instance.created_by)
 
