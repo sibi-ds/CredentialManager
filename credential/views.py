@@ -142,37 +142,57 @@ def create_vault_access(request: HttpRequest, employee_uid, vault_uid):
         raise CustomApiException(e.status_code, e.detail)
 
 
-@api_view(['PUT', 'DELETE'])
-def do_vault_access(request: HttpRequest, employee_uid, vault_uid,
-                    vault_access_id):
-    logger.debug(f'Enter {__name__} module, do_vault_access method')
+@api_view(['PATCH'])
+def remove_vault_access(request: HttpRequest, employee_uid, vault_uid):
+    """used to remove vault access of a vault
+    """
+    try:
+        logger.debug(f'Enter {__name__} module, remove_vault_access method')
 
-    organization_id = request.query_params.get('organization_id')
+        organization_id = request.query_params.get('organization_id')
 
-    if request.method == 'PUT':
-        try:
-            vault_access = user_access_service.update_vault_access(
-                organization_id, employee_uid, vault_uid, vault_access_id,
-                request.data
-            )
+        deleted_vault_access = user_access_service.remove_vault_access(
+            organization_id, employee_uid, vault_uid
+        )
 
-            logger.debug(f'Exit {__name__} module, do_vault_access method')
-            return Response(vault_access)
-        except CustomApiException as e:
-            logger.error(f'Exit {__name__} module, do_vault_access method')
-            raise CustomApiException(e.status_code, e.detail)
+        logger.debug(f'Exit {__name__} module, remove_vault_access method')
+        return Response(deleted_vault_access)
+    except CustomApiException as e:
+        logger.error(f'Exit {__name__} module, remove_vault_access method')
+        raise CustomApiException(e.status_code, e.detail)
 
-    if request.method == 'DELETE':
-        try:
-            vault_access = user_access_service.delete_vault_access(
-                organization_id, employee_uid, vault_uid, vault_access_id
-            )
 
-            logger.debug(f'Exit {__name__} module, do_vault_access method')
-            return Response(vault_access)
-        except CustomApiException as e:
-            logger.error(f'Exit {__name__} module, do_vault_access method')
-            raise CustomApiException(e.status_code, e.detail)
+# @api_view(['PUT', 'DELETE'])
+# def do_vault_access(request: HttpRequest, employee_uid, vault_uid,
+#                     vault_access_id):
+#     logger.debug(f'Enter {__name__} module, do_vault_access method')
+#
+#     organization_id = request.query_params.get('organization_id')
+#
+#     if request.method == 'PUT':
+#         try:
+#             vault_access = user_access_service.update_vault_access(
+#                 organization_id, employee_uid, vault_uid, vault_access_id,
+#                 request.data
+#             )
+#
+#             logger.debug(f'Exit {__name__} module, do_vault_access method')
+#             return Response(vault_access)
+#         except CustomApiException as e:
+#             logger.error(f'Exit {__name__} module, do_vault_access method')
+#             raise CustomApiException(e.status_code, e.detail)
+#
+#     if request.method == 'PATCH':
+#         try:
+#             vault_access = user_access_service.delete_vault_access(
+#                 organization_id, employee_uid, vault_uid, vault_access_id
+#             )
+#
+#             logger.debug(f'Exit {__name__} module, do_vault_access method')
+#             return Response(vault_access)
+#         except CustomApiException as e:
+#             logger.error(f'Exit {__name__} module, do_vault_access method')
+#             raise CustomApiException(e.status_code, e.detail)
 
 
 @api_view(['POST'])
