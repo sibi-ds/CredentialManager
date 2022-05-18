@@ -15,8 +15,6 @@ urlpatterns = [
          name='create_vault_access'),
     path('<uuid:vault_uid>/access/remove', views.remove_vault_access,
          name='remove_vault_access'),
-    # path('<uuid:vault_uid>/access/<int:vault_access_id>',
-    #      views.do_vault_access, name='do_vault_access'),
     path('<uuid:vault_uid>/component/<uuid:component_uid>/item/<uuid:item_uid>',
          views.decrypt_item, name='decrypt_item'),
 ]

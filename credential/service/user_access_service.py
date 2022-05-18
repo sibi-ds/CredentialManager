@@ -450,82 +450,6 @@ def create_organization_vault_access(organization_id, creating_employee,
         return None
 
 
-def update_vault_access(organization_id, uid, vault_id, vault_access_id, data):
-    logger.debug(f'Enter {__name__} module, '
-                 f'{update_vault_access.__name__} method')
-
-    try:
-        vault_access = VaultAccess.objects.get(
-            vault_access_id=vault_access_id,
-            organization=organization_id,
-            vault=vault_id,
-            created_by__employee_uid=uid
-        )
-
-        vault_access_serializer = VaultAccessSerializer(instance=vault_access,
-                                                        data=data,
-                                                        partial=True)
-        vault_access_serializer.is_valid(raise_exception=True)
-        vault_access_serializer.save()
-
-        logger.debug('Vault access updated successfully')
-        logger.debug(f'Exit {__name__} module, '
-                     f'{update_vault_access.__name__} method')
-
-        return vault_access_serializer.data
-    except VaultAccess.DoesNotExist:
-        logger.error('No vault access found')
-        logger.error(f'Exit {__name__} module, '
-                     f'{update_vault_access.__name__} method')
-        raise CustomApiException(404, 'No vault access found')
-    except ValidationError:
-        logger.error('Entered details are not valid')
-        logger.error(f'Exit {__name__} module, '
-                     f'{update_vault_access.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
-
-
-# def delete_vault_access(organization_id, uid, vault_id, vault_access_id):
-#     logger.debug(f'Enter {__name__} module, '
-#                  f'{delete_vault_access.__name__} method')
-#
-#     try:
-#         vault_owner = Employee.objects.get(
-#             employee_uid=uid,
-#             active=True,
-#             organization=organization_id,
-#         )
-#
-#         vault_access = VaultAccess.objects.get(
-#             vault_access_id=vault_access_id,
-#             organization=organization_id,
-#             vault=vault_id,
-#             created_by=vault_owner
-#         )
-#
-#         if vault_owner.employee_id != vault_access.created_by.employee_id:
-#             logger.error('Only vault owner can remove access')
-#             raise CustomApiException(400, 'Only vault owner can remove access')
-#
-#         vault_access.delete()
-#
-#         logger.debug('Vault access removed successfully')
-#         logger.debug(f'Exit {__name__} module, '
-#                      f'{update_vault_access.__name__} method')
-#
-#         return 'Vault access deletion successful'
-#     except VaultAccess.DoesNotExist:
-#         logger.error('No vault access found')
-#         logger.error(f'Exit {__name__} module, '
-#                      f'{delete_vault_access.__name__} method')
-#         raise CustomApiException(404, 'No vault access found')
-#     except Employee.DoesNotExist:
-#         logger.error('No such employee exist')
-#         logger.error(f'Exit {__name__} module, '
-#                      f'{delete_vault_access.__name__} method')
-#         raise CustomApiException(404, 'No such employee exist')
-
-
 def remove_vault_access(organization_id, employee_uid, vault_uid):
     """used to remove vault access of a vault
     """
@@ -591,12 +515,18 @@ def remove_vault_access(organization_id, employee_uid, vault_uid):
 def revoke_vault_access(vault_access):
     """used to remove vault access given to a vault
     """
-    logger.debug(f'Enter {__name__} module, '
-                 f'{revoke_vault_access.__name__} method')
+    try:
+        logger.debug(f'Enter {__name__} module, '
+                     f'{revoke_vault_access.__name__} method')
 
-    vault_access.active = False
-    vault_access.updated_by = vault_access.created_by
-    vault_access.save()
+        vault_access.active = False
+        vault_access.updated_by = vault_access.created_by
+        vault_access.save()
 
-    logger.debug(f'Exit {__name__} module, '
-                 f'{revoke_vault_access.__name__} method')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{revoke_vault_access.__name__} method')
+    except IntegrityError:
+        logger.error('Vault access removal failure')
+        logger.error(f'Exit {__name__} module, '
+                     f'{revoke_vault_access.__name__} method')
+        raise CustomApiException(500, 'Vault access removal failure')

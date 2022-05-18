@@ -162,39 +162,6 @@ def remove_vault_access(request: HttpRequest, employee_uid, vault_uid):
         raise CustomApiException(e.status_code, e.detail)
 
 
-# @api_view(['PUT', 'DELETE'])
-# def do_vault_access(request: HttpRequest, employee_uid, vault_uid,
-#                     vault_access_id):
-#     logger.debug(f'Enter {__name__} module, do_vault_access method')
-#
-#     organization_id = request.query_params.get('organization_id')
-#
-#     if request.method == 'PUT':
-#         try:
-#             vault_access = user_access_service.update_vault_access(
-#                 organization_id, employee_uid, vault_uid, vault_access_id,
-#                 request.data
-#             )
-#
-#             logger.debug(f'Exit {__name__} module, do_vault_access method')
-#             return Response(vault_access)
-#         except CustomApiException as e:
-#             logger.error(f'Exit {__name__} module, do_vault_access method')
-#             raise CustomApiException(e.status_code, e.detail)
-#
-#     if request.method == 'PATCH':
-#         try:
-#             vault_access = user_access_service.delete_vault_access(
-#                 organization_id, employee_uid, vault_uid, vault_access_id
-#             )
-#
-#             logger.debug(f'Exit {__name__} module, do_vault_access method')
-#             return Response(vault_access)
-#         except CustomApiException as e:
-#             logger.error(f'Exit {__name__} module, do_vault_access method')
-#             raise CustomApiException(e.status_code, e.detail)
-
-
 @api_view(['POST'])
 def decrypt_item(request: HttpRequest, employee_uid, vault_uid, component_uid,
                  item_uid):

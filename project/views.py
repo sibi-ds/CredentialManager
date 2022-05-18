@@ -2,7 +2,6 @@
 """
 import logging
 
-from django.db import IntegrityError
 from django.http import HttpRequest
 
 from rest_framework.decorators import api_view
@@ -14,7 +13,8 @@ from files import file_reader
 from organization.models import Organization
 
 from project.models import Project
-from project.serializers import ProjectSerializer, ProjectOnlySerializer
+from project.serializers import ProjectSerializer
+from project.serializers import ProjectOnlySerializer
 from project.service import project_service
 
 from utils.api_exceptions import CustomApiException
