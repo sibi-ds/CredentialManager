@@ -1,4 +1,8 @@
 .idea
 CredentialManager/__pycache__/
+CredentialManager/organization/__pycache__/
+CredentialManager/employee/__pycache__/
+CredentialManager/project/__pycache__/
+CredentialManager/credential/__pycache__/
 migrations
 *.log
