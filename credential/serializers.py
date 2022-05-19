@@ -23,7 +23,7 @@ class ItemSerializer(serializers.ModelSerializer):
 
 
 class ComponentSerializer(serializers.ModelSerializer):
-    items = ItemSerializer(many=True, write_only=True)
+    items = ItemSerializer(many=True)
 
     class Meta:
         model = Component
@@ -99,7 +99,7 @@ class ComponentResponseSerializer(serializers.ModelSerializer):
 class ComponentOnlySerializer(serializers.ModelSerializer):
     class Meta:
         model = Component
-        fields = ('component_id', 'name', 'description',
+        fields = ('component_id', 'component_uid', 'name', 'description',
                   'vault', 'organization', 'active',
                   'created_at', 'created_by', 'updated_at', 'updated_by')
 
