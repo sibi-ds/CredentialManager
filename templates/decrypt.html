@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Decrypt</title>
+</head>
+<body style="background:#B7E5DD">
+    <form action="/vault/component/item/decrypt" method="post" style="padding:10% 0% 0% 20%">
+        <table style='width:100%'>
+            <tr style="height:50px">
+                <td style='width:10%'>
+                    <label>Token</label>
+                </td>
+                <td>
+                    <input id="token" type="text" name="token" value="{{ token }}" style="width:50%;height:25px;">
+                </td>
+            </tr>
+
+            <tr style="height:50px">
+                <td style='width:10%'>
+                    <label>Secret Key</label>
+                </td>
+                <td>
+                    <input id="secret_key" type="text" name="secret_key" value="{{ secret_key }}" style="width:50%;height:25px;">
+                </td>
+            </tr>
+        </table>
+
+        <input type="submit" value="Decrypt"  style="margin-top:30px;margin-bottom:30px">
+    </form>
+
+    {% if decrypted_value != None %}
+        <span style="padding:0% 0% 0% 20%">Decrypted Value : {{decrypted_value}}</span>
+    {% endif %}
+
+    {% if error != None %}
+        <span style="padding:0% 0% 0% 20%">Error : {{error}}</span>
+    {% endif %}
+</body>
+</html>

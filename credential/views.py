@@ -4,6 +4,7 @@ vaults, components, items and user accesses
 import logging
 
 from django.http import HttpRequest
+from django.shortcuts import render
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -11,6 +12,7 @@ from rest_framework.response import Response
 from credential.service import component_service, item_service
 from credential.service import user_access_service
 from credential.service import vault_service
+from utils import encryption_decryption
 
 from utils.api_exceptions import CustomApiException
 
@@ -178,3 +180,29 @@ def decrypt_item(request: HttpRequest, employee_uid, vault_uid, component_uid,
     except CustomApiException as e:
         logger.error(f'Exit {__name__} module, decrypt_item method')
         raise CustomApiException(e.status_code, e.detail)
+
+
+@api_view(['POST', 'GET'])
+def decrypt(request: HttpRequest):
+    """used to render the decrypted value
+    """
+    if request.method == 'GET':
+        return render(request, 'decrypt.html')
+    elif request.method == 'POST':
+        token = request.data.get('token')
+        secret_key = request.data.get('secret_key')
+
+        if not token or not secret_key:
+            return render(request, 'decrypt.html',
+                          {'error': 'Enter both token and secret key'})
+
+        secret_key = bytes(secret_key, 'utf-8')
+        decrypted_value = encryption_decryption.decrypt(token, secret_key)
+
+        if decrypted_value is None:
+            return render(request, 'decrypt.html',
+                          {'error': 'Decryption failure. '
+                                    'Enter valid details.'})
+
+        return render(request, 'decrypt.html',
+                      {'decrypted_value': decrypted_value})

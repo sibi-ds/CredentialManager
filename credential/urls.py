@@ -17,4 +17,5 @@ urlpatterns = [
          name='remove_vault_access'),
     path('<uuid:vault_uid>/component/<uuid:component_uid>/item/<uuid:item_uid>',
          views.decrypt_item, name='decrypt_item'),
+    path('component/item/decrypt', views.decrypt, name='decrypt'),
 ]
