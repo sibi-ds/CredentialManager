@@ -41,7 +41,7 @@ def create_employee(request: HttpRequest):
         raise CustomApiException(e.status_code, e.detail)
 
 
-@api_view(['POST', ])
+@api_view(['GET'])
 def create_employees(request: HttpRequest):
     """used to create employees using employees csv file
     """
@@ -90,7 +90,7 @@ def create_employees(request: HttpRequest):
         raise CustomApiException(404, 'No such organization exist')
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 @transaction.atomic
 def get_employee(request: HttpRequest):
     """used to get employee details and associated vaults using employee email

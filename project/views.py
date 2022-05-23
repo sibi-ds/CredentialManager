@@ -75,34 +75,19 @@ def create_projects(request: HttpRequest):
 def get_projects(request: HttpRequest):
     """used to get all vaults from an organization
     """
-    logger.info(f'Enter {__name__} module, {get_projects.__name__} method')
+    logger.debug(f'Enter {__name__} module, get_projects method')
 
     try:
         organization_id = request.query_params.get('organization_id')
-
-        organization = Organization.objects.get(
-            organization_id=organization_id, active=True,
-            email=request.data.get('email')
-        )
-
-        projects = Project.objects.filter(organization=organization_id)
-
-        project_serializer = ProjectOnlySerializer(projects, many=True)
-
-        return Response(project_serializer.data)
-    except KeyError:
-        logger.error('Enter valid details')
-        logger.error(f'Exit {__name__} module, '
-                     f'{get_projects.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
-    except Organization.DoesNotExist:
-        logger.error('No such organization exist')
-        logger.error(f'Exit {__name__} module, '
-                     f'{get_projects.__name__} method')
-        raise CustomApiException(404, 'No such organization exist')
+        project_serializer = project_service.get_projects(organization_id)
+        logger.debug(f'Exit {__name__} module, get_projects method')
+        return Response(project_serializer)
+    except CustomApiException as e:
+        logger.error(f'Exit {__name__} module, get_projects method')
+        raise CustomApiException(e.status_code, e.detail)
 
 
-@api_view(['POST', ])
+@api_view(['POST'])
 def create_project(request: HttpRequest):
     """used to create project in an organization
     """
@@ -118,7 +103,7 @@ def create_project(request: HttpRequest):
         raise CustomApiException(e.status_code, e.detail)
 
 
-@api_view(['POST'])
+@api_view(['PATCH'])
 def assign_employee(request: HttpRequest, project_uid):
     """used to assign employee to a project
     """
@@ -135,7 +120,7 @@ def assign_employee(request: HttpRequest, project_uid):
         raise CustomApiException(e.status_code, e.detail)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 def get_project(request: HttpRequest, project_uid):
     """used to get project details from an organization
     """
