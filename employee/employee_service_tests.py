@@ -26,8 +26,8 @@ class EmployeeServiceTest(TestCase):
             created_by=organization
         )
 
-    # @mock.patch('employee.models.Employee.save',
-    #             return_value=Employee.objects.filter(employee_id=1).first())
+    @mock.patch('employee.models.Employee.save',
+                return_value=Employee.objects.filter(employee_id=1).first())
     @mock.patch('employee.models.Employee.objects.create',
                 return_value=Employee.objects.filter(employee_id=1))
     def test_create_employees(self, mocked_create_employee,

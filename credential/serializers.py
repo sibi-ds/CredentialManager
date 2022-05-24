@@ -1,6 +1,5 @@
 """This module contains serializers for all the models
 """
-from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
 from credential.models import Component
@@ -8,7 +7,8 @@ from credential.models import Item
 from credential.models import Vault
 from credential.models import VaultAccess
 
-from utils.encryption_decryption import encrypt, decrypt, generate_key
+from utils.encryption_decryption import encrypt
+from utils.encryption_decryption import generate_key
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -64,15 +64,26 @@ class ComponentSerializer(serializers.ModelSerializer):
             item_id = item.get('item_id', None)
 
             if item_id:
-                component_item = Item.objects.get(item_id=item_id,
-                                                  component=instance)
+                component_item = Item.objects.get(
+                    item_id=item_id, component=instance,
+                    organization=instance.organization
+                )
+
                 component_item.key = item.get('key', component_item.key)
-                # component_item.value = item.get('value', component_item.value)
-                component_item.active = \
-                    item.get('active', component_item.active)
+
+                value = item.get('value', component_item.value)
+
+                if value != component_item.value:
+                    salt = generate_key()
+                    component_item.value = encrypt(value, salt)
+                    component_item.salt = salt.decode('utf-8')
+
+                component_item.active = item.get('active',
+                                                 component_item.active)
                 component_item.updated_by = component_item.created_by
-                component_item.organization = item \
-                    .get('organization', component_item.organization)
+                component_item.organization = item.get(
+                    'organization', component_item.organization
+                )
                 component_item.updated_by = validated_data['updated_by']
                 component_item.save()
             else:
@@ -81,7 +92,8 @@ class ComponentSerializer(serializers.ModelSerializer):
                 item['salt'] = salt.decode('utf-8')
 
                 Item.objects.create(component=instance, **item,
-                                    created_by=instance.created_by)
+                                    created_by=validated_data['updated_by'],
+                                    organization=instance.organization)
 
         return instance
 

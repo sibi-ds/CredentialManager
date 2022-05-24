@@ -38,7 +38,7 @@ def create_organization(data):
         raise CustomApiException(400, 'Enter valid details')
 
 
-def get_organizations(data):
+def get_organizations():
     """used to get all organizations
     """
     try:

@@ -36,8 +36,7 @@ def get_organizations(request: HttpRequest):
     """
     try:
         logger.debug(f'Enter {__name__} module, get_organizations method')
-        organization_serializer = organization_service \
-            .get_organizations(request.data)
+        organization_serializer = organization_service.get_organizations()
         logger.debug(f'Exit {__name__} module, get_organizations method')
         return Response(organization_serializer)
     except CustomApiException as e:

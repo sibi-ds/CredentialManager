@@ -144,7 +144,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': 'CredentialManager.log',
+            'filename': 'logs/CredentialManager.log',
             'formatter': 'overall',
         },
 
