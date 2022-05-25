@@ -12,37 +12,12 @@ class OrganizationServiceTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         Organization.objects.create(
-            organization_id=1, name='ideas2it',
+            name='ideas2it',
             email='admin@ideas2it.com', password='admin',
         )
 
-    # @mock.patch('organization.models.Organization.objects.create',
-    #             return_value=Organization.objects.get(organization_id=1))
-    # def test_create_organization(self, mocked_create_organization):
-    #     payload = {
-    #         'name': 'element5',
-    #         'email': 'admin@element5.com',
-    #         'password': 'admin'
-    #     }
-    #
-    #     organization = organization_service.create_organization(payload)
-    #
-    #     self.assertEqual(
-    #         organization.get('organization_id'),
-    #         mocked_create_organization.return_value.organization_id
-    #     )
-    #     self.assertEqual(
-    #         organization.get('name'),
-    #         mocked_create_organization.return_value.name
-    #     )
-    #     self.assertEqual(
-    #         organization.get('email'),
-    #         mocked_create_organization.return_value.email
-    #     )
-
     def test_create_organization(self):
         payload = {
-            'organization_id': 1,
             'name': 'element5',
             'email': 'admin@element5.com',
             'password': 'admin'
