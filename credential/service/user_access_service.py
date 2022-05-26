@@ -41,31 +41,6 @@ def get_vault_accesses(organization_id, vault_id):
     return vault_accesses
 
 
-# def get_admin_vault_access(organization_id, employee_id, vault_id):
-#     """used to get vault access of vault owner
-#     """
-#     logger.debug(f'Enter {__name__} module, '
-#                  f'{get_admin_vault_access.__name__} method')
-#
-#     try:
-#         vault_access = VaultAccess.objects.get(
-#             organization=organization_id, organization__active=True,
-#             vault=vault_id, vault__active=True,
-#             created_by=employee_id,
-#             access_level=None
-#         )
-#
-#         logger.debug(f'Exit {__name__} module, '
-#                      f'{get_admin_vault_access.__name__} method')
-#
-#         return vault_access
-#     except VaultAccess.DoesNotExist:
-#         logger.error('No admin vault access exist')
-#         logger.error(f'Exit {__name__} module, '
-#                      f'{get_admin_vault_access.__name__} method')
-#         return None
-
-
 def get_organization_vault_access(organization_id, vault_id):
     """used to get organization vault access
     """

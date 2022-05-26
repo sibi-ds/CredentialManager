@@ -6,8 +6,10 @@ from rest_framework.exceptions import ValidationError
 
 from credential.models import VaultAccess
 from credential.serializers import VaultResponseSerializer
+
 from employee.models import Employee
-from employee.serializers import EmployeeSerializer, EmployeeResponseSerializer
+from employee.serializers import EmployeeResponseSerializer
+from employee.serializers import EmployeeSerializer
 
 from organization.models import Organization
 
@@ -147,3 +149,36 @@ def get_employee(organization_id, data):
         logger.error('Employee not exist')
         logger.error(f'Exit {__name__} module, {get_employee.__name__} method')
         raise CustomApiException(404, 'No such employee exist')
+
+
+def get_employees(organization_id, data):
+    """used to get all projects from an organization
+    """
+    try:
+        logger.debug(f'Enter {__name__} module, '
+                     f'{get_employees.__name__} method')
+
+        email = data.get('email')
+
+        organization = Organization.objects.get(
+            organization_id=organization_id, active=True, email=email
+        )
+
+        employees = Employee.objects.filter(organization=organization)
+
+        employee_serializer = EmployeeSerializer(employees, many=True)
+
+        logger.debug(f'Exit {__name__} module, '
+                     f'{get_employees.__name__} method')
+
+        return employee_serializer.data
+    except (ValidationError, KeyError):
+        logger.error('Enter valid details')
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_employees.__name__} method')
+        raise CustomApiException(500, 'Enter valid details')
+    except Organization.DoesNotExist:
+        logger.error('Organization not exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_employees.__name__} method')
+        raise CustomApiException(404, 'No such organization exist')

@@ -136,6 +136,8 @@ class VaultAccess(BaseModel):
         db_table = 'cm_vault_access'
 
     vault_access_id = models.AutoField(primary_key=True)
+    vault_access_uid = models.UUIDField(default=uuid.uuid4, editable=False,
+                                        unique=True)
 
     access_levels = [
         ("INDIVIDUAL", "INDIVIDUAL"),

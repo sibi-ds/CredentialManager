@@ -7,6 +7,7 @@ from rest_framework.exceptions import ValidationError
 from employee.models import Employee
 
 from project.models import Project
+from project.serializers import ProjectOnlySerializer
 from project.serializers import ProjectSerializer
 
 from organization.models import Organization
@@ -68,13 +69,6 @@ def get_project(organization_id, project_uid, data):
             project_uid=project_uid, active=True,
         )
 
-        email = data.get('email')
-
-        employee = Employee.objects.get(
-            organization=organization, organization__active=True,
-            email=email, active=True,
-        )
-
         project_serializer = ProjectSerializer(project)
 
         logger.debug(f'Exit {__name__} module, '
@@ -96,11 +90,37 @@ def get_project(organization_id, project_uid, data):
         logger.error(f'Exit {__name__} module, '
                      f'{get_project.__name__} method')
         raise CustomApiException(404, 'No such project exist')
-    except Employee.DoesNotExist:
-        logger.error('Employee not exist')
+
+
+def get_projects(organization_id):
+    """used to get all projects from an organization
+    """
+    try:
+        logger.debug(f'Enter {__name__} module, '
+                     f'{get_projects.__name__} method')
+
+        organization = Organization.objects.get(
+            organization_id=organization_id, active=True,
+        )
+
+        projects = Project.objects.filter(organization=organization)
+
+        project_serializer = ProjectOnlySerializer(projects, many=True)
+
+        logger.debug(f'Exit {__name__} module, '
+                     f'{get_projects.__name__} method')
+
+        return project_serializer.data
+    except (ValidationError, KeyError):
+        logger.error('Enter valid details')
         logger.error(f'Exit {__name__} module, '
-                     f'{get_project.__name__} method')
-        raise CustomApiException(404, 'No such employee exist')
+                     f'{get_projects.__name__} method')
+        raise CustomApiException(500, 'Enter valid details')
+    except Organization.DoesNotExist:
+        logger.error('Organization not exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_projects.__name__} method')
+        raise CustomApiException(404, 'No such organization exist')
 
 
 def assign_employee(organization_id, project_uid, data):
@@ -120,6 +140,8 @@ def assign_employee(organization_id, project_uid, data):
         )
 
         email = data.get('email')
+
+        print(email)
 
         employee = Employee.objects.get(
             organization=organization, organization__active=True,

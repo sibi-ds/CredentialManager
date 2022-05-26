@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'CredentialManager.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'review',
+        'NAME': 'credential_manager',
         'USER': 'postgres',
         'PASSWORD': 'root',
         'HOST': 'localhost',
@@ -132,10 +132,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'EXCEPTION_HANDLER':
         'utils.api_exceptions.custom_exception_handler',
-
-    # 'DEFAULT_AUTHENTICATION_CLASSES': [
-    #     'rest_framework.authentication.TokenAuthentication',
-    # ],
 }
 
 # logging configurations
@@ -148,7 +144,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': 'CredentialManager.log',
+            'filename': 'logs/CredentialManager.log',
             'formatter': 'overall',
         },
 
