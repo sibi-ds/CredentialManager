@@ -7,6 +7,7 @@ from rest_framework.exceptions import ValidationError
 from employee.models import Employee
 
 from project.models import Project
+from project.serializers import ProjectOnlySerializer
 from project.serializers import ProjectSerializer
 
 from organization.models import Organization
@@ -102,9 +103,9 @@ def get_projects(organization_id):
             organization_id=organization_id, active=True,
         )
 
-        projects = Project.objects.all()
+        projects = Project.objects.filter(organization=organization)
 
-        project_serializer = ProjectSerializer(projects, many=True)
+        project_serializer = ProjectOnlySerializer(projects, many=True)
 
         logger.debug(f'Exit {__name__} module, '
                      f'{get_projects.__name__} method')

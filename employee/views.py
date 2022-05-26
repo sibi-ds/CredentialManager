@@ -5,21 +5,19 @@ import logging
 from django.db import transaction
 from django.http import HttpRequest
 
-from employee.service import employee_service
-from utils.encryption_decryption import decrypt
-
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from employee.models import Employee
 from employee.serializers import EmployeeSerializer
+from employee.service import employee_service
 
 from files import file_reader
 
 from organization.models import Organization
 
 from utils.api_exceptions import CustomApiException
+from utils.encryption_decryption import decrypt
 
 
 logger = logging.getLogger('credential-manager-logger')
@@ -116,17 +114,10 @@ def get_employees(request: HttpRequest):
 
     try:
         organization_id = request.query_params.get('organization_id')
-
-        organization = Organization.objects.get(
-            organization_id=organization_id, active=True,
-            email=request.data.get('email')
+        employee_serializer = employee_service.get_employees(
+            organization_id, request.data
         )
-
-        employees = Employee.objects.filter(organization=organization_id)
-
-        employee_serializer = EmployeeSerializer(employees, many=True)
-
-        return Response(employee_serializer.data)
+        return Response(employee_serializer)
     except KeyError:
         logger.error('Enter valid details')
         logger.error(f'Exit {__name__} module, '

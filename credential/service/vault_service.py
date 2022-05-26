@@ -15,6 +15,7 @@ from credential.service import user_access_service
 from employee.models import Employee
 
 from organization.models import Organization
+
 from project.models import Project
 
 from utils.api_exceptions import CustomApiException
@@ -24,7 +25,7 @@ logger = logging.getLogger('credential-manager-logger')
 
 
 @transaction.atomic
-def create_vault(organization_id, uid, data):
+def create_vault(organization_id, employee_uid, data):
     """used to create vault in an organization
     """
     logger.debug(f'Enter {__name__} module, {create_vault.__name__} method')
@@ -35,7 +36,7 @@ def create_vault(organization_id, uid, data):
         )
 
         employee = Employee.objects.get(
-            employee_uid=uid, active=True,
+            employee_uid=employee_uid, active=True,
             organization=organization,
             organization__active=True
         )
@@ -133,7 +134,7 @@ def get_vaults(organization_id, data):
         raise CustomApiException(404, 'No such organization exist')
 
 
-def get_vault(organization_id, uid, vault_uid):
+def get_vault(organization_id, employee_uid, vault_uid):
     """used to get vault from an organization
     """
     logger.debug(f'Enter {__name__} module, {get_vault.__name__} method')
@@ -149,7 +150,7 @@ def get_vault(organization_id, uid, vault_uid):
         )
 
         employee = Employee.objects.get(
-            employee_uid=uid, active=True,
+            employee_uid=employee_uid, active=True,
             organization=organization,
         )
 
@@ -159,7 +160,7 @@ def get_vault(organization_id, uid, vault_uid):
                                                         vault.vault_id):
             vault_serializer = VaultSerializer(vault)
             logger.debug(f'Exit {__name__} module, '
-                        f'{get_vault.__name__} method')
+                         f'{get_vault.__name__} method')
             return vault_serializer.data
         else:
             logger.error(f'Exit {__name__} module, '
@@ -175,7 +176,8 @@ def get_vault(organization_id, uid, vault_uid):
         logger.error(f'Exit {__name__} module, {get_vault.__name__} method')
         raise CustomApiException(404, 'No such vault exist')
     except Employee.DoesNotExist:
-        logger.error(f'Employee for Employee UID : {uid} is not exist')
+        logger.error(f'Employee for Employee UID : '
+                     f'{employee_uid} is not exist')
         logger.error(f'Exit {__name__} module, {get_vault.__name__} method')
         raise CustomApiException(404, 'No such employee exist')
     except Organization.DoesNotExist:
@@ -188,7 +190,7 @@ def get_vault(organization_id, uid, vault_uid):
         raise CustomApiException(e.status_code, e.detail)
 
 
-def update_vault(organization_id, uid, vault_uid, data):
+def update_vault(organization_id, employee_uid, vault_uid, data):
     """used to update vault details
     """
     logger.debug(f'Enter {__name__} module, {update_vault.__name__} method')
@@ -204,7 +206,7 @@ def update_vault(organization_id, uid, vault_uid, data):
         )
 
         employee = Employee.objects.get(
-            employee_uid=uid, active=True,
+            employee_uid=employee_uid, active=True,
             organization=organization,
         )
 
