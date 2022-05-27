@@ -73,7 +73,8 @@ def get_project_vault_access(organization_id, vault_id, projects):
                  f'{get_project_vault_access.__name__} method')
 
     try:
-        project_ids = [project.project_id for project in projects]
+        project_ids = [project.project_id for project in projects
+                       if project.active]
 
         vault_access = VaultAccess.objects.get(
             organization=organization_id, organization__active=True,

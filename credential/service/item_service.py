@@ -69,7 +69,7 @@ def get_item(data, organization_id, employee_uid, vault_uid, component_uid,
         )
 
         component = Component.objects.get(
-            component_uid=component_uid,
+            component_uid=component_uid, active=True,
             vault=vault, vault__active=True,
             organization=organization
         )

@@ -70,7 +70,7 @@ def get_employee(organization_id, data):
 
         employee = Employee.objects.get(
             email=email, active=True,
-            organization=organization.organization_id,
+            organization=organization,
             organization__active=True
         )
 
@@ -164,7 +164,8 @@ def get_employees(organization_id, data):
             organization_id=organization_id, active=True, email=email
         )
 
-        employees = Employee.objects.filter(organization=organization)
+        employees = Employee.objects.filter(organization=organization,
+                                            active=True)
 
         employee_serializer = EmployeeSerializer(employees, many=True)
 
@@ -182,3 +183,97 @@ def get_employees(organization_id, data):
         logger.error(f'Exit {__name__} module, '
                      f'{get_employees.__name__} method')
         raise CustomApiException(404, 'No such organization exist')
+
+
+def update_employee_status(organization_id, employee_uid, data):
+    """used to update employee status
+    """
+    try:
+        logger.debug(f'Enter {__name__} module, '
+                     f'{update_employee_status.__name__} method')
+
+        email = data.get("email")
+
+        organization = Organization.objects.get(
+            organization_id=organization_id,
+            active=True
+        )
+
+        employee = Employee.objects.get(
+            employee_uid=employee_uid,
+            organization=organization
+        )
+
+        employee.active = not employee.active
+        employee.save()
+
+        employee_serializer = EmployeeSerializer(employee)
+
+        logger.debug('Employee status updated successful')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{update_employee_status.__name__} method')
+
+        return employee_serializer.data
+    except ValidationError:
+        logger.error('Enter valid details.Employee status update failure')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_employee_status.__name__} method')
+        raise CustomApiException(400, 'Enter valid details')
+    except Organization.DoesNotExist:
+        logger.error('No such organization exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_employee_status.__name__} method')
+        raise CustomApiException(400, 'No such organization exist')
+    except Employee.DoesNotExist:
+        logger.error('No such employee exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_employee_status.__name__} method')
+        raise CustomApiException(400, 'No such employee exist')
+
+
+def update_employee(organization_id, employee_uid, data):
+    """used to update employee status
+    """
+    try:
+        logger.debug(f'Enter {__name__} module, '
+                     f'{update_employee.__name__} method')
+
+        email = data.get("email")
+
+        organization = Organization.objects.get(
+            organization_id=organization_id,
+            active=True
+        )
+
+        employee = Employee.objects.get(
+            employee_uid=employee_uid,
+            organization=organization,
+            active=True
+        )
+
+        employee_serializer = EmployeeSerializer(employee, data=data,
+                                                 partial=True)
+        employee_serializer.is_valid(raise_exception=False)
+        print(employee_serializer.errors)
+        employee_serializer.save()
+
+        logger.debug('Employee details updated successfully')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{update_employee.__name__} method')
+
+        return employee_serializer.data
+    except ValidationError:
+        logger.error('Enter valid details. Employee update failure')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_employee.__name__} method')
+        raise CustomApiException(400, 'Enter valid details')
+    except Organization.DoesNotExist:
+        logger.error('No such organization exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_employee.__name__} method')
+        raise CustomApiException(400, 'No such organization exist')
+    except Employee.DoesNotExist:
+        logger.error('No such employee exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_employee.__name__} method')
+        raise CustomApiException(400, 'No such employee exist')

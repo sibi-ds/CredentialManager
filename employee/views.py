@@ -130,6 +130,37 @@ def get_employees(request: HttpRequest):
         raise CustomApiException(404, 'No such organization exist')
 
 
+@api_view(['PUT', 'PATCH'])
+def do_employee(request: HttpRequest, employee_uid):
+    organization_id = request.query_params.get('organization_id')
+
+    if request.method == 'PUT':
+        """used to update employee details
+        """
+        try:
+            employee_serializer = employee_service.update_employee(
+                organization_id, employee_uid, request.data
+            )
+            logger.debug(f'Exit {__name__} module, do_employee method')
+            return Response(employee_serializer)
+        except CustomApiException as e:
+            logger.error(f'Exit {__name__} module, do_employee method')
+            raise CustomApiException(e.status_code, e.detail)
+
+    if request.method == 'PATCH':
+        """used to update employee status
+        """
+        try:
+            employee_serializer = employee_service.update_employee_status(
+                organization_id, employee_uid, request.data
+            )
+            logger.debug(f'Exit {__name__} module, do_employee method')
+            return Response(employee_serializer)
+        except CustomApiException as e:
+            logger.error(f'Exit {__name__} module, do_employee method')
+            raise CustomApiException(e.status_code, e.detail)
+
+
 # @api_view(['PUT'])
 # def update_employee(request: HttpRequest, uid):
 #     """used to update employee details

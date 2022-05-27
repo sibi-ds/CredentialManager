@@ -103,7 +103,8 @@ def get_projects(organization_id):
             organization_id=organization_id, active=True,
         )
 
-        projects = Project.objects.filter(organization=organization)
+        projects = Project.objects.filter(organization=organization,
+                                          active=True)
 
         project_serializer = ProjectOnlySerializer(projects, many=True)
 
@@ -183,3 +184,95 @@ def assign_employee(organization_id, project_uid, data):
         logger.error(f'Exit {__name__} module, '
                      f'{assign_employee.__name__} method')
         raise CustomApiException(404, 'No such employee exist')
+
+
+def update_project_status(organization_id, project_uid, data):
+    """used to update project status
+    """
+    try:
+        logger.debug(f'Enter {__name__} module, '
+                     f'{update_project_status.__name__} method')
+
+        email = data.get("email")
+
+        organization = Organization.objects.get(
+            organization_id=organization_id,
+            email=email, active=True
+        )
+
+        project = Project.objects.get(
+            project_uid=project_uid,
+            organization=organization
+        )
+
+        project.active = not project.active
+        project.save()
+
+        project_serializer = ProjectOnlySerializer(project)
+
+        logger.debug('Project status updated successful')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{update_project_status.__name__} method')
+
+        return project_serializer.data
+    except ValidationError:
+        logger.error('Enter valid details. Project status update failure')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_project_status.__name__} method')
+        raise CustomApiException(400, 'Enter valid details')
+    except Organization.DoesNotExist:
+        logger.error('No such organization exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_project_status.__name__} method')
+        raise CustomApiException(400, 'No such organization exist')
+    except Project.DoesNotExist:
+        logger.error('No such project exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_project_status.__name__} method')
+        raise CustomApiException(400, 'No such project exist')
+
+
+def update_project(organization_id, project_uid, data):
+    """used to update project details
+    """
+    try:
+        logger.debug(f'Enter {__name__} module, '
+                     f'{update_project.__name__} method')
+
+        organization = Organization.objects.get(
+            organization_id=organization_id,
+            active=True
+        )
+
+        project = Project.objects.get(
+            project_uid=project_uid,
+            organization=organization,
+            active=True
+        )
+
+        project_serializer = ProjectOnlySerializer(project, data=data,
+                                                   partial=True)
+        project_serializer.is_valid(raise_exception=False)
+        print(project_serializer.errors)
+        project_serializer.save()
+
+        logger.debug('Project details updated successfully')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{update_project.__name__} method')
+
+        return project_serializer.data
+    except ValidationError:
+        logger.error('Enter valid details. Project update failure')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_project.__name__} method')
+        raise CustomApiException(400, 'Enter valid details')
+    except Organization.DoesNotExist:
+        logger.error('No such organization exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_project.__name__} method')
+        raise CustomApiException(400, 'No such organization exist')
+    except Project.DoesNotExist:
+        logger.error('No such project exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_project.__name__} method')
+        raise CustomApiException(400, 'No such project exist')

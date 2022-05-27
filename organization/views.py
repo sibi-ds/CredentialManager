@@ -44,7 +44,7 @@ def get_organizations(request: HttpRequest):
         raise CustomApiException(e.status_code, e.detail)
 
 
-@api_view(['GET', 'PUT'])
+@api_view(['GET', 'PUT', 'PATCH'])
 def do_organization(request: HttpRequest, organization_uid):
     logger.debug(f'Enter {__name__} module, do_organization method')
 
@@ -66,6 +66,18 @@ def do_organization(request: HttpRequest, organization_uid):
         try:
             organization_serializer = organization_service \
                 .update_organization(organization_uid, request.data)
+            logger.debug(f'Exit {__name__} module, do_organization method')
+            return Response(organization_serializer)
+        except CustomApiException as e:
+            logger.error(f'Exit {__name__} module, do_organization method')
+            raise CustomApiException(e.status_code, e.detail)
+
+    if request.method == 'PATCH':
+        """used to update organization status
+        """
+        try:
+            organization_serializer = organization_service \
+                .update_organization_status(organization_uid, request.data)
             logger.debug(f'Exit {__name__} module, do_organization method')
             return Response(organization_serializer)
         except CustomApiException as e:
