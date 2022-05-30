@@ -27,7 +27,6 @@ class Vault(BaseModel):
 
     class Meta:
         db_table = 'cm_vault'
-        unique_together = (('organization', 'name'),)
 
     vault_id = models.AutoField(primary_key=True)
     vault_uid = models.UUIDField(default=uuid.uuid4, editable=False,
@@ -60,7 +59,6 @@ class Component(BaseModel):
 
     class Meta:
         db_table = 'cm_component'
-        unique_together = (('organization', 'name'),)
 
     component_id = models.AutoField(primary_key=True)
     component_uid = models.UUIDField(default=uuid.uuid4, editable=False,
@@ -102,7 +100,7 @@ class Item(BaseModel):
     item_uid = models.UUIDField(default=uuid.uuid4, editable=False,
                                 unique=True)
     key = models.CharField(max_length=45)
-    value = models.CharField(max_length=136)
+    value = models.CharField(max_length=188)
     salt = models.CharField(max_length=44)
 
     component = models.ForeignKey(Component, on_delete=models.CASCADE,

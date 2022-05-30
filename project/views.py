@@ -120,18 +120,43 @@ def assign_employee(request: HttpRequest, project_uid):
         raise CustomApiException(e.status_code, e.detail)
 
 
-@api_view(['GET'])
-def get_project(request: HttpRequest, project_uid):
-    """used to get project details from an organization
-    """
-    logger.debug(f'Enter {__name__} module, get_project method')
+@api_view(['GET', 'PUT', 'PATCH'])
+def do_project(request: HttpRequest, project_uid):
+    logger.debug(f'Enter {__name__} module, do_project method')
+    organization_id = request.query_params.get('organization_id')
 
-    try:
-        organization_id = request.query_params.get('organization_id')
-        project = project_service.get_project(organization_id,
-                                              project_uid, request.data)
-        logger.debug(f'Exit {__name__} module, get_project method')
-        return Response(project)
-    except CustomApiException as e:
-        logger.error(f'Exit {__name__} module, get_project method')
-        raise CustomApiException(e.status_code, e.detail)
+    if request.method == 'GET':
+        try:
+            project = project_service.get_project(organization_id,
+                                                  project_uid, request.data)
+            logger.debug(f'Exit {__name__} module, do_project method')
+            return Response(project)
+        except CustomApiException as e:
+            logger.error(f'Exit {__name__} module, do_project method')
+            raise CustomApiException(e.status_code, e.detail)
+
+    if request.method == 'PUT':
+        """used to update project details
+        """
+        try:
+            project_serializer = project_service.update_project(
+                organization_id, project_uid, request.data
+            )
+            logger.debug(f'Exit {__name__} module, do_employee method')
+            return Response(project_serializer)
+        except CustomApiException as e:
+            logger.error(f'Exit {__name__} module, do_employee method')
+            raise CustomApiException(e.status_code, e.detail)
+
+    if request.method == 'PATCH':
+        """used to update project status
+        """
+        try:
+            project_serializer = project_service.update_project_status(
+                organization_id, project_uid, request.data
+            )
+            logger.debug(f'Exit {__name__} module, do_project method')
+            return Response(project_serializer)
+        except CustomApiException as e:
+            logger.error(f'Exit {__name__} module, do_project method')
+            raise CustomApiException(e.status_code, e.detail)

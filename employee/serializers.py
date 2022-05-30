@@ -54,6 +54,20 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
         return employee
 
+    # override update method
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+
+        password = validated_data.get('password', None)
+
+        if password is not None and password != instance.password:
+            instance.password = make_password(password)
+
+        instance.updated_by = instance.created_by.organization_id
+        instance.save()
+
+        return instance
+
 
 class EmployeeResponseSerializer(serializers.ModelSerializer):
 

@@ -45,7 +45,7 @@ def get_organizations():
         logger.debug(f'Enter {__name__} module, '
                      f'{get_organizations.__name__} method')
 
-        organizations = Organization.objects.all()
+        organizations = Organization.objects.filter(active=True)
         organization_serializer = OrganizationSerializer(organizations,
                                                          many=True)
 
@@ -127,4 +127,40 @@ def update_organization(organization_uid, data):
         logger.error('No such organization exist')
         logger.error(f'Exit {__name__} module, '
                      f'{update_organization.__name__} method')
+        raise CustomApiException(400, 'No such organization exist')
+
+
+def update_organization_status(organization_uid, data):
+    """used to update organization status
+    """
+    try:
+        logger.debug(f'Enter {__name__} module, '
+                     f'{update_organization_status.__name__} method')
+
+        email = data.get("email")
+
+        organization = Organization.objects.get(
+            organization_uid=organization_uid,
+            email=email
+        )
+
+        organization.active = not organization.active
+        organization.save()
+
+        organization_serializer = OrganizationSerializer(organization)
+
+        logger.debug('Organization status updated successful')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{update_organization_status.__name__} method')
+
+        return organization_serializer.data
+    except ValidationError:
+        logger.error('Enter valid details.Organization status update failure')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_organization_status.__name__} method')
+        raise CustomApiException(400, 'Enter valid details')
+    except Organization.DoesNotExist:
+        logger.error('No such organization exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_organization_status.__name__} method')
         raise CustomApiException(400, 'No such organization exist')

@@ -60,20 +60,13 @@ def create_vault(organization_id, employee_uid, data):
             )
 
             vault_access_data['project'] = project.project_id
-        elif access_level == 'INDIVIDUAL':
-            accessing_employee = Employee.objects.get(
-                email=data.pop('employee'), active=True,
-                organization=organization
-            )
-
-            vault_access_data['employee'] = accessing_employee.employee_id
 
         vault_serializer = VaultSerializer(data=data)
         vault_serializer.is_valid(raise_exception=True)
         vault_serializer.save()
         logger.debug('Vault creation successful')
 
-        if access_level is not None:
+        if access_level == 'PROJECT' or access_level == 'ORGANIZATION':
             vault_access_data['vault'] = vault_serializer.data['vault_id']
             vault_access_serializer = VaultAccessSerializer(
                 data=vault_access_data
@@ -116,7 +109,8 @@ def get_vaults(organization_id, data):
 
         vaults = Vault.objects.filter(
             organization=organization.organization_id,
-            organization__active=True
+            organization__active=True,
+            active=True
         )
 
         vault_serializer = VaultOnlySerializer(vaults, many=True)
@@ -202,7 +196,8 @@ def update_vault(organization_id, employee_uid, vault_uid, data):
 
         vault = Vault.objects.get(
             vault_uid=vault_uid,
-            organization=organization
+            organization=organization,
+            active=True
         )
 
         employee = Employee.objects.get(
@@ -246,6 +241,66 @@ def update_vault(organization_id, employee_uid, vault_uid, data):
         logger.error(f'Exit {__name__} module, {update_vault.__name__} method')
         raise CustomApiException(404, 'No such organization exist')
     except Employee.DoesNotExist:
-        logger.error(f'vault for Employee UID : {uid} is not exist')
+        logger.error(f'vault for Employee UID : {employee_uid} is not exist')
         logger.error(f'Exit {__name__} module, {update_vault.__name__} method')
         raise CustomApiException(404, 'No such employee exist')
+
+
+def update_vault_status(organization_id, employee_uid, vault_uid, data):
+    """used to update active status
+    """
+    logger.debug(f'Enter {__name__} module, '
+                 f'{update_vault_status.__name__} method')
+
+    try:
+        organization = Organization.objects.get(
+            organization_id=organization_id, active=True
+        )
+
+        vault = Vault.objects.get(
+            vault_uid=vault_uid,
+            organization=organization,
+        )
+
+        employee = Employee.objects.get(
+            employee_uid=employee_uid, active=True,
+            organization=organization,
+        )
+
+        if vault.created_by.employee_id == employee.employee_id:
+            vault.active = not vault.active
+            vault.save()
+            vault_serializer = VaultOnlySerializer(vault)
+            logger.debug(f'Exit {__name__} module, '
+                         f'{update_vault_status.__name__} method')
+            return vault_serializer.data
+        else:
+            logger.error(f'Exit {__name__} module, '
+                         f'{update_vault_status.__name__} method')
+            raise CustomApiException(400, 'Only vault owner can update status')
+    except KeyError:
+        logger.error('Enter valid details')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_vault_status.__name__} method')
+        raise CustomApiException(400, 'Enter valid details')
+    except Vault.DoesNotExist:
+        logger.error(f'vault for Vault UID : {vault_uid} is not exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_vault_status.__name__} method')
+        raise CustomApiException(404, 'No such vault exist')
+    except Employee.DoesNotExist:
+        logger.error(f'Employee for Employee UID : '
+                     f'{employee_uid} is not exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_vault_status.__name__} method')
+        raise CustomApiException(404, 'No such employee exist')
+    except Organization.DoesNotExist:
+        logger.error('No such organization exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_vault_status.__name__} method')
+        raise CustomApiException(404, 'No such organization exist')
+    except CustomApiException as e:
+        logger.error('Enter valid credentials')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_vault_status.__name__} method')
+        raise CustomApiException(e.status_code, e.detail)

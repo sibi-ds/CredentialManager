@@ -1,14 +1,18 @@
 """This module contains serializers for all the models
 """
+import re
+
 from rest_framework import serializers
 
 from credential.models import Component
 from credential.models import Item
 from credential.models import Vault
 from credential.models import VaultAccess
+from utils.api_exceptions import CustomApiException
 
 from utils.encryption_decryption import encrypt
 from utils.encryption_decryption import generate_key
+from utils.password_matcher import is_password_valid
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -38,6 +42,10 @@ class ComponentSerializer(serializers.ModelSerializer):
         component = Component.objects.create(**validated_data)
 
         for item in items:
+            if item.get('key') == 'password' \
+                    and not is_password_valid(item.get('value')):
+                raise CustomApiException(400, 'Enter valid password')
+
             salt = generate_key()
             item['value'] = encrypt(item.get('value'), salt)
             item['salt'] = salt.decode('utf-8')
@@ -87,6 +95,10 @@ class ComponentSerializer(serializers.ModelSerializer):
                 component_item.updated_by = validated_data['updated_by']
                 component_item.save()
             else:
+                if item.get('key') == 'password' \
+                        and not is_password_valid(item.get('value')):
+                    raise CustomApiException(400, 'Enter valid password')
+
                 salt = generate_key()
                 item['value'] = encrypt(item.get('value'), salt)
                 item['salt'] = salt.decode('utf-8')
