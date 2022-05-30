@@ -45,7 +45,7 @@ def get_organizations():
         logger.debug(f'Enter {__name__} module, '
                      f'{get_organizations.__name__} method')
 
-        organizations = Organization.objects.all()
+        organizations = Organization.objects.filter(active=True)
         organization_serializer = OrganizationSerializer(organizations,
                                                          many=True)
 
