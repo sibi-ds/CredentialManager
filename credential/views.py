@@ -13,7 +13,7 @@ from credential.service import component_service, item_service
 from credential.service import user_access_service
 from credential.service import vault_service
 
-from utils import encryption_decryption
+from utils import encryption_decryption, encryptor
 
 from utils.api_exceptions import CustomApiException
 
@@ -224,8 +224,7 @@ def decrypt(request: HttpRequest):
             return render(request, 'decrypt.html',
                           {'error': 'Enter both token and secret key'})
 
-        secret_key = bytes(secret_key, 'utf-8')
-        decrypted_value = encryption_decryption.decrypt(token, secret_key)
+        decrypted_value = encryptor.decrypt(token, secret_key)
 
         if decrypted_value is None:
             return render(request, 'decrypt.html',

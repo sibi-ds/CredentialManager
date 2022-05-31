@@ -5,6 +5,7 @@ import uuid
 from django.db import models
 
 from organization.models import Organization
+from utils.validators import Validator
 
 
 class BaseModel(models.Model):
@@ -25,7 +26,8 @@ class Project(BaseModel):
     project_id = models.AutoField(primary_key=True)
     project_uid = models.UUIDField(default=uuid.uuid4, editable=False,
                                    unique=True)
-    name = models.CharField(max_length=45)
+    name = models.CharField(max_length=45, null=False,
+                            validators=[Validator.PROJECT_NAME_REGEX])
     email = models.EmailField(max_length=45, unique=True)
     description = models.TextField()
 

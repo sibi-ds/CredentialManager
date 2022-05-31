@@ -92,11 +92,11 @@ def get_item(data, organization_id, employee_uid, vault_uid, component_uid,
                          f'{get_item.__name__} method')
             raise CustomApiException(400, 'You don\'t have access '
                                           'to this vault')
-    except KeyError:
-        logger.error('Entered details are not valid')
-        logger.error(f'Exit {__name__} module, '
-                     f'{get_item.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, {get_item.__name__} method')
+        raise CustomApiException(400, message)
     except Organization.DoesNotExist:
         logger.error(f'Organization with Organization ID: '
                      f'{organization_id} not exist')

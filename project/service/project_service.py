@@ -41,11 +41,18 @@ def create_project(organization_id, data):
                      f'{create_project.__name__} method')
 
         return project_serializer.data
-    except (ValidationError, KeyError):
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Enter valid details. Project creation failure')
         logger.error(f'Exit {__name__} module, '
                      f'{create_project.__name__} method')
-        raise CustomApiException(500, 'Enter valid details')
+        raise CustomApiException(500, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{create_project.__name__} method')
+        raise CustomApiException(400, message)
     except Organization.DoesNotExist:
         logger.error('Organization not exist. Project creation failure')
         logger.error(f'Exit {__name__} module, '
@@ -75,11 +82,18 @@ def get_project(organization_id, project_uid, data):
                      f'{get_project.__name__} method')
 
         return project_serializer.data
-    except (ValidationError, KeyError):
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Enter valid details')
         logger.error(f'Exit {__name__} module, '
                      f'{get_project.__name__} method')
-        raise CustomApiException(500, 'Enter valid details')
+        raise CustomApiException(500, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_project.__name__} method')
+        raise CustomApiException(400, message)
     except Organization.DoesNotExist:
         logger.error('Organization not exist')
         logger.error(f'Exit {__name__} module, '
@@ -92,15 +106,18 @@ def get_project(organization_id, project_uid, data):
         raise CustomApiException(404, 'No such project exist')
 
 
-def get_projects(organization_id):
+def get_projects(organization_id, data):
     """used to get all projects from an organization
     """
     try:
         logger.debug(f'Enter {__name__} module, '
                      f'{get_projects.__name__} method')
 
+        email = data['email']
+
         organization = Organization.objects.get(
             organization_id=organization_id, active=True,
+            email=email
         )
 
         projects = Project.objects.filter(organization=organization,
@@ -112,11 +129,18 @@ def get_projects(organization_id):
                      f'{get_projects.__name__} method')
 
         return project_serializer.data
-    except (ValidationError, KeyError):
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Enter valid details')
         logger.error(f'Exit {__name__} module, '
                      f'{get_projects.__name__} method')
-        raise CustomApiException(500, 'Enter valid details')
+        raise CustomApiException(500, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_projects.__name__} method')
+        raise CustomApiException(400, message)
     except Organization.DoesNotExist:
         logger.error('Organization not exist')
         logger.error(f'Exit {__name__} module, '
@@ -140,9 +164,7 @@ def assign_employee(organization_id, project_uid, data):
             project_uid=project_uid, active=True,
         )
 
-        email = data.get('email')
-
-        print(email)
+        email = data['email']
 
         employee = Employee.objects.get(
             organization=organization, organization__active=True,
@@ -164,11 +186,18 @@ def assign_employee(organization_id, project_uid, data):
                      f'{assign_employee.__name__} method')
 
         return project_serializer.data
-    except (ValidationError, KeyError):
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Enter valid details')
         logger.error(f'Exit {__name__} module, '
                      f'{assign_employee.__name__} method')
-        raise CustomApiException(500, 'Enter valid details')
+        raise CustomApiException(500, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{assign_employee.__name__} method')
+        raise CustomApiException(400, message)
     except Organization.DoesNotExist:
         logger.error('Organization not exist')
         logger.error(f'Exit {__name__} module, '
@@ -193,7 +222,7 @@ def update_project_status(organization_id, project_uid, data):
         logger.debug(f'Enter {__name__} module, '
                      f'{update_project_status.__name__} method')
 
-        email = data.get("email")
+        email = data["email"]
 
         organization = Organization.objects.get(
             organization_id=organization_id,
@@ -215,11 +244,18 @@ def update_project_status(organization_id, project_uid, data):
                      f'{update_project_status.__name__} method')
 
         return project_serializer.data
-    except ValidationError:
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Enter valid details. Project status update failure')
         logger.error(f'Exit {__name__} module, '
                      f'{update_project_status.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_project_status.__name__} method')
+        raise CustomApiException(400, message)
     except Organization.DoesNotExist:
         logger.error('No such organization exist')
         logger.error(f'Exit {__name__} module, '
@@ -252,8 +288,7 @@ def update_project(organization_id, project_uid, data):
 
         project_serializer = ProjectOnlySerializer(project, data=data,
                                                    partial=True)
-        project_serializer.is_valid(raise_exception=False)
-        print(project_serializer.errors)
+        project_serializer.is_valid(raise_exception=True)
         project_serializer.save()
 
         logger.debug('Project details updated successfully')
@@ -261,11 +296,18 @@ def update_project(organization_id, project_uid, data):
                      f'{update_project.__name__} method')
 
         return project_serializer.data
-    except ValidationError:
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Enter valid details. Project update failure')
         logger.error(f'Exit {__name__} module, '
                      f'{update_project.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_project.__name__} method')
+        raise CustomApiException(400, message)
     except Organization.DoesNotExist:
         logger.error('No such organization exist')
         logger.error(f'Exit {__name__} module, '

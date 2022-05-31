@@ -1,4 +1,4 @@
-from unittest import mock
+import uuid
 
 from django.test import TestCase
 from credential.models import Vault
@@ -6,6 +6,7 @@ from credential.service import vault_service
 from employee.models import Employee
 from organization.models import Organization
 from project.models import Project
+from utils.api_exceptions import CustomApiException
 
 
 class VaultServiceTest(TestCase):
@@ -54,9 +55,15 @@ class VaultServiceTest(TestCase):
         self.assertEqual(vault.get('description'), 'Demo Vault')
         self.assertEqual(vault.get('organization'), 1)
 
+        with self.assertRaises(CustomApiException):
+            vault_service.create_vault(2, employee.employee_uid, {})
+
+        with self.assertRaises(CustomApiException):
+            vault_service.create_vault(1, uuid.uuid4(), {})
+
     def test_update_vault(self):
         employee = Employee.objects.get(employee_id=1)
-        vault = Vault.objects.get(vault_id=1)
+        existing_vault = Vault.objects.get(vault_id=1)
 
         payload = {
             'name': 'Updated Demo Vault',
@@ -64,24 +71,50 @@ class VaultServiceTest(TestCase):
         }
 
         vault = vault_service.update_vault(
-            1, employee.employee_uid, vault.vault_uid, payload
+            1, employee.employee_uid, existing_vault.vault_uid, payload
         )
 
         self.assertEqual(vault.get('vault_id'), 1)
         self.assertEqual(vault.get('name'), 'Updated Demo Vault')
         self.assertEqual(vault.get('description'), 'Updated Demo Vault')
 
+        with self.assertRaises(CustomApiException):
+            vault_service.update_vault(
+                1, employee.employee_uid, uuid.uuid4(), {}
+            )
+
+        with self.assertRaises(CustomApiException):
+            vault_service.update_vault(
+                1, uuid.uuid4(), existing_vault.vault_uid, {}
+            )
+
+        with self.assertRaises(CustomApiException):
+            vault_service.update_vault(2, uuid.uuid4(), uuid.uuid4(), {})
+
     def test_get_vault(self):
         employee = Employee.objects.get(employee_id=1)
-        vault = Vault.objects.get(vault_id=1)
+        existing_vault = Vault.objects.get(vault_id=1)
 
         vault = vault_service.get_vault(
-            1, employee.employee_uid, vault.vault_uid
+            1, employee.employee_uid, existing_vault.vault_uid
         )
 
         self.assertEqual(vault.get('vault_id'), 1)
         self.assertEqual(vault.get('name'), 'Organization Vault')
         self.assertEqual(vault.get('description'), 'Organization Vault')
+
+        with self.assertRaises(CustomApiException):
+            vault_service.update_vault(
+                1, employee.employee_uid, uuid.uuid4(), {}
+            )
+
+        with self.assertRaises(CustomApiException):
+            vault_service.update_vault(
+                1, uuid.uuid4(), existing_vault.vault_uid, {}
+            )
+
+        with self.assertRaises(CustomApiException):
+            vault_service.update_vault(2, uuid.uuid4(), uuid.uuid4(), {})
 
     def test_get_vaults(self):
         payload = {
@@ -94,3 +127,9 @@ class VaultServiceTest(TestCase):
         self.assertEqual(vaults[0].get('vault_id'), 1)
         self.assertEqual(vaults[0].get('name'), 'Organization Vault')
         self.assertEqual(vaults[0].get('description'), 'Organization Vault')
+
+        with self.assertRaises(CustomApiException):
+            vault_service.get_vaults(2, {})
+
+        with self.assertRaises(CustomApiException):
+            vault_service.get_vaults(1, {})

@@ -2,6 +2,8 @@ import uuid
 
 from django.db import models
 
+from utils.validators import Validator
+
 
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
@@ -23,7 +25,10 @@ class Organization(BaseModel):
     organization_id = models.AutoField(primary_key=True)
     organization_uid = models.UUIDField(default=uuid.uuid4, editable=False,
                                         unique=True)
-    name = models.CharField(max_length=45, unique=True)
+    name = models.CharField(
+        max_length=45, unique=True,
+        validators=[Validator.ORGANIZATION_NAME_REGEX]
+    )
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
 

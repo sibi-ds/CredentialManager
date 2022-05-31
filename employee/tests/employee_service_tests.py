@@ -1,3 +1,4 @@
+import uuid
 from unittest import mock
 
 from django.test import TestCase
@@ -6,6 +7,7 @@ from employee.models import Employee
 from employee.service import employee_service
 
 from organization.models import Organization
+from utils.api_exceptions import CustomApiException
 
 
 class EmployeeServiceTest(TestCase):
@@ -38,6 +40,12 @@ class EmployeeServiceTest(TestCase):
         self.assertEqual(employee.get('email'), 'sasi@ideas2it.com')
         self.assertEqual(employee.get('organization'), 1)
 
+        with self.assertRaises(CustomApiException):
+            employee_service.create_employee(1, {})
+
+        with self.assertRaises(CustomApiException):
+            employee_service.create_employee(2, {})
+
     def test_get_employee(self):
         payload = {
             'email': 'sibi@ideas2it.com'
@@ -62,3 +70,42 @@ class EmployeeServiceTest(TestCase):
         self.assertEqual(employees[0].get('employee_id'), 1)
         self.assertEqual(employees[0].get('name'), 'sibi')
         self.assertEqual(employees[0].get('email'), 'sibi@ideas2it.com')
+
+        with self.assertRaises(CustomApiException):
+            employee_service.get_employees(1, {})
+
+        with self.assertRaises(CustomApiException):
+            employee_service.get_employees(2, {'email': 'admin@idesa2it.com'})
+
+    def test_update_employee(self):
+        existing_employee = Employee.objects.get(employee_id=1)
+
+        payload = {
+            'name': 'sibi dhanapal',
+            'email': 'sibi@ideas2it.com',
+            'password': 'sibi dhanapal',
+        }
+
+        employee = employee_service.update_employee(
+            1, existing_employee.employee_uid, payload
+        )
+
+        self.assertEqual(employee.get('organization'), 1)
+        self.assertEqual(employee.get('employee_id'), 1)
+        self.assertEqual(employee.get('name'), 'sibi dhanapal')
+        self.assertEqual(employee.get('email'), 'sibi@ideas2it.com')
+
+        with self.assertRaises(CustomApiException):
+            employee_service.update_employee(
+                1, existing_employee.employee_uid, {}
+            )
+
+        with self.assertRaises(CustomApiException):
+            employee_service.update_employee(
+                2, existing_employee.employee_uid, {}
+            )
+
+        with self.assertRaises(CustomApiException):
+            employee_service.update_employee(
+                1, uuid.uuid4(), {}
+            )

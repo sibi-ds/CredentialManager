@@ -11,6 +11,8 @@ from organization.models import Organization
 
 from project.models import Project
 
+from utils.validators import Validator
+
 
 # all models subclasses the base model
 class BaseModel(models.Model):
@@ -31,7 +33,8 @@ class Vault(BaseModel):
     vault_id = models.AutoField(primary_key=True)
     vault_uid = models.UUIDField(default=uuid.uuid4, editable=False,
                                  unique=True)
-    name = models.CharField(max_length=45)
+    name = models.CharField(max_length=45,
+                            validators=[Validator.VAULT_NAME_REGEX])
     description = models.TextField()
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE,
@@ -63,7 +66,8 @@ class Component(BaseModel):
     component_id = models.AutoField(primary_key=True)
     component_uid = models.UUIDField(default=uuid.uuid4, editable=False,
                                      unique=True)
-    name = models.CharField(max_length=45)
+    name = models.CharField(max_length=45,
+                            validators=[Validator.COMPONENT_NAME_REGEX])
     description = models.TextField()
 
     vault = models.ForeignKey(Vault, to_field='vault_id',
@@ -100,7 +104,7 @@ class Item(BaseModel):
     item_uid = models.UUIDField(default=uuid.uuid4, editable=False,
                                 unique=True)
     key = models.CharField(max_length=45)
-    value = models.CharField(max_length=188)
+    value = models.CharField(max_length=88)
     salt = models.CharField(max_length=44)
 
     component = models.ForeignKey(Component, on_delete=models.CASCADE,

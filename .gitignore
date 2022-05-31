@@ -4,5 +4,11 @@ CredentialManager/organization/__pycache__/
 CredentialManager/employee/__pycache__/
 CredentialManager/project/__pycache__/
 CredentialManager/credential/__pycache__/
+CredentialManagerutils/__pycache__/
+CredentialManager/files/__pycache__/
+CredentialManager/organization/tests/__pycache__/
+CredentialManager/employee/tests/__pycache__/
+CredentialManager/project/tests/__pycache__/
+CredentialManager/credential/tests/__pycache__/
 migrations
 *.log

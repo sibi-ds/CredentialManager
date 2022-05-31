@@ -4,13 +4,17 @@ components of a vault
 import logging
 
 from django.db import transaction
-from rest_framework.exceptions import ValidationError
+from django.core.exceptions import ValidationError \
+    as DjangoCoreValidationException
+
+from rest_framework.exceptions import ValidationError \
+    as RestFrameworkValidationException
 
 from credential.models import Component
 from credential.models import Vault
 
-from credential.serializers import ComponentResponseSerializer, \
-    ComponentOnlySerializer
+from credential.serializers import ComponentOnlySerializer
+from credential.serializers import ComponentResponseSerializer
 from credential.serializers import ComponentSerializer
 from credential.service import user_access_service
 
@@ -73,11 +77,18 @@ def create_component(organization_id, employee_uid, vault_uid, data):
                          f'{create_component.__name__} method')
             raise CustomApiException(400, 'You don\'t have component '
                                           'creation access')
-    except ValidationError:
+    except RestFrameworkValidationException as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Entered details are not valid')
         logger.error(f'Exit {__name__} module, '
                      f'{create_component.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(400, message)
+    except DjangoCoreValidationException as dcve:
+        message = dcve.message
+        logger.error('Entered details are not valid')
+        logger.error(f'Exit {__name__} module, '
+                     f'{create_component.__name__} method')
+        raise CustomApiException(400, message)
     except Organization.DoesNotExist:
         logger.error(f'Component creation failure. '
                      f'Organization with Organization ID: '
@@ -138,11 +149,6 @@ def get_component(organization_id, employee_uid, vault_uid, component_uid,
                          f'{get_component.__name__} method')
             raise CustomApiException(400, 'You don\'t have access '
                                           'to this vault')
-    except KeyError:
-        logger.error('Entered details are not valid')
-        logger.error(f'Exit {__name__} module, '
-                     f'{get_component.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
     except Organization.DoesNotExist:
         logger.error(f'Organization with Organization ID: '
                      f'{organization_id} not exist')
@@ -207,24 +213,32 @@ def update_component(organization_id, employee_uid, vault_uid, component_uid,
             component_serializer.is_valid(raise_exception=True)
             component_serializer.save()
 
-            component = component_serializer.data
-
             logger.debug('Component details updated successfully')
             logger.debug(f'Exit {__name__} module, '
                          f'{update_component.__name__} method')
 
-            return component
-        else:
-            logger.error('Component update failure.')
-            logger.error(f'Exit {__name__} module, '
-                         f'{update_component.__name__} method')
-            raise CustomApiException(400,
-                                     'You don\'t have component update access')
-    except (ValidationError, KeyError):
+        return component_serializer.data
+    except RestFrameworkValidationException as rfve:
+        message = list(rfve.get_full_details().values())[0][0]['message']
+        logger.error('Component details update failure')
         logger.error('Entered details are not valid')
         logger.error(f'Exit {__name__} module, '
                      f'{update_component.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(400, message)
+    except DjangoCoreValidationException as dcve:
+        message = dcve.message
+        logger.error('Component details update failure')
+        logger.error('Entered details are not valid')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_component.__name__} method')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error('Component details update failure')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_component.__name__} method')
+        raise CustomApiException(400, message)
     except Vault.DoesNotExist:
         logger.error('No such vault exist')
         logger.error(f'Exit {__name__} module, '
@@ -294,11 +308,18 @@ def update_component_status(organization_id, employee_uid, vault_uid,
                          f'{update_component_status.__name__} method')
             raise CustomApiException(400, 'Vault owner or Component owner '
                                           'only can update active status')
-    except (ValidationError, KeyError):
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Entered details are not valid')
         logger.error(f'Exit {__name__} module, '
                      f'{update_component_status.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_component_status.__name__} method')
+        raise CustomApiException(400, message)
     except Vault.DoesNotExist:
         logger.error('No such vault exist')
         logger.error(f'Exit {__name__} module, '

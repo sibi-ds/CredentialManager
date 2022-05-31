@@ -78,10 +78,17 @@ def create_vault(organization_id, employee_uid, data):
         logger.debug(f'Exit {__name__} module, {create_vault.__name__} method')
 
         return vault_serializer.data
-    except (ValidationError, KeyError):
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Vault creation failure. Enter valid details')
         logger.error(f'Exit {__name__} module, {create_vault.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{create_vault.__name__} method')
+        raise CustomApiException(400, message)
     except Employee.DoesNotExist:
         logger.error('Vault creation failure. No such employee exist')
         logger.error(f'Exit {__name__} module, {create_vault.__name__} method')
@@ -104,7 +111,7 @@ def get_vaults(organization_id, data):
     try:
         organization = Organization.objects.get(
             organization_id=organization_id, active=True,
-            email=data.get('email')
+            email=data['email']
         )
 
         vaults = Vault.objects.filter(
@@ -118,10 +125,12 @@ def get_vaults(organization_id, data):
         logger.debug(f'Exit {__name__} module, {get_vaults.__name__} method')
 
         return vault_serializer.data
-    except KeyError:
-        logger.error('Enter valid details')
-        logger.error(f'Exit {__name__} module, {get_vaults.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_vaults.__name__} method')
+        raise CustomApiException(400, message)
     except Organization.DoesNotExist:
         logger.error('No such organization exist')
         logger.error(f'Exit {__name__} module, {get_vaults.__name__} method')
@@ -161,10 +170,12 @@ def get_vault(organization_id, employee_uid, vault_uid):
                          f'{get_vault.__name__} method')
             raise CustomApiException(400, 'You don\'t have access '
                                           'to this vault')
-    except KeyError:
-        logger.error('Enter valid details')
-        logger.error(f'Exit {__name__} module, {get_vault.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_vault.__name__} method')
+        raise CustomApiException(400, message)
     except Vault.DoesNotExist:
         logger.error(f'vault for Vault UID : {vault_uid} is not exist')
         logger.error(f'Exit {__name__} module, {get_vault.__name__} method')
@@ -228,10 +239,17 @@ def update_vault(organization_id, employee_uid, vault_uid, data):
                          f'{update_vault.__name__} method')
             raise CustomApiException(400,
                                      'You don\'t have vault update access')
-    except (ValidationError, KeyError):
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Valid details not provided')
         logger.error(f'Exit {__name__} module, {update_vault.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_vault.__name__} method')
+        raise CustomApiException(400, message)
     except Vault.DoesNotExist:
         logger.error(f'Vault for Vault UID : {vault_uid} is not exist')
         logger.error(f'Exit {__name__} module, {update_vault.__name__} method')
@@ -278,11 +296,12 @@ def update_vault_status(organization_id, employee_uid, vault_uid, data):
             logger.error(f'Exit {__name__} module, '
                          f'{update_vault_status.__name__} method')
             raise CustomApiException(400, 'Only vault owner can update status')
-    except KeyError:
-        logger.error('Enter valid details')
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
         logger.error(f'Exit {__name__} module, '
                      f'{update_vault_status.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(400, message)
     except Vault.DoesNotExist:
         logger.error(f'vault for Vault UID : {vault_uid} is not exist')
         logger.error(f'Exit {__name__} module, '

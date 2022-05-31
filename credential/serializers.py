@@ -1,18 +1,17 @@
 """This module contains serializers for all the models
 """
-import re
-
 from rest_framework import serializers
 
 from credential.models import Component
 from credential.models import Item
 from credential.models import Vault
 from credential.models import VaultAccess
+
 from utils.api_exceptions import CustomApiException
 
-from utils.encryption_decryption import encrypt
-from utils.encryption_decryption import generate_key
+from utils.encryptor import encrypt
 from utils.password_matcher import is_password_valid
+from utils.validators import Validator
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -42,13 +41,12 @@ class ComponentSerializer(serializers.ModelSerializer):
         component = Component.objects.create(**validated_data)
 
         for item in items:
-            if item.get('key') == 'password' \
-                    and not is_password_valid(item.get('value')):
-                raise CustomApiException(400, 'Enter valid password')
+            if item['key'] == 'password':
+                Validator.PASSWORD_REGEX(item['value'])
 
-            salt = generate_key()
-            item['value'] = encrypt(item.get('value'), salt)
-            item['salt'] = salt.decode('utf-8')
+            encrypted = encrypt(item['value'])
+            item['value'] = encrypted['encoded_text']
+            item['salt'] = encrypted['texted_key']
 
             Item.objects.create(component=component, **item,
                                 created_by=component.created_by,
@@ -69,7 +67,7 @@ class ComponentSerializer(serializers.ModelSerializer):
         items = validated_data.pop('items')
 
         for item in items:
-            item_id = item.get('item_id', None)
+            item_id = item.get('item_id')
 
             if item_id:
                 component_item = Item.objects.get(
@@ -82,9 +80,9 @@ class ComponentSerializer(serializers.ModelSerializer):
                 value = item.get('value', component_item.value)
 
                 if value != component_item.value:
-                    salt = generate_key()
-                    component_item.value = encrypt(value, salt)
-                    component_item.salt = salt.decode('utf-8')
+                    encrypted = encrypt(value)
+                    component_item.value = encrypted['encoded_text']
+                    component_item.salt = encrypted['texted_key']
 
                 component_item.active = item.get('active',
                                                  component_item.active)
@@ -95,13 +93,12 @@ class ComponentSerializer(serializers.ModelSerializer):
                 component_item.updated_by = validated_data['updated_by']
                 component_item.save()
             else:
-                if item.get('key') == 'password' \
-                        and not is_password_valid(item.get('value')):
-                    raise CustomApiException(400, 'Enter valid password')
+                if item['key'] == 'password':
+                    Validator.PASSWORD_REGEX(item['value'])
 
-                salt = generate_key()
-                item['value'] = encrypt(item.get('value'), salt)
-                item['salt'] = salt.decode('utf-8')
+                encrypted = encrypt(item['value'])
+                item['value'] = encrypted['encoded_text']
+                item['salt'] = encrypted['texted_key']
 
                 Item.objects.create(component=instance, **item,
                                     created_by=validated_data['updated_by'],

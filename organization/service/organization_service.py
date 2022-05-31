@@ -31,11 +31,12 @@ def create_organization(data):
                      f'{create_organization.__name__} method')
 
         return organization_serializer.data
-    except ValidationError:
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Organization creation failure')
         logger.error(f'Exit {__name__} module, '
                      f'{create_organization.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(400, message)
 
 
 def get_organizations():
@@ -67,7 +68,7 @@ def get_organization(organization_uid, data):
         logger.debug(f'Enter {__name__} module, '
                      f'{get_organization.__name__} method')
 
-        email = data.get("email")
+        email = data['email']
 
         organization = Organization.objects.get(
             organization_uid=organization_uid, email=email, active=True
@@ -85,11 +86,18 @@ def get_organization(organization_uid, data):
         logger.error(f'Exit {__name__} module, '
                      f'{get_organization.__name__} method')
         raise CustomApiException(400, 'No such organization exist')
-    except ValidationError:
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Enter valid details')
         logger.error(f'Exit {__name__} module, '
                      f'{get_organization.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_organization.__name__} method')
+        raise CustomApiException(400, message)
 
 
 def update_organization(organization_uid, data):
@@ -99,11 +107,11 @@ def update_organization(organization_uid, data):
         logger.debug(f'Enter {__name__} module, '
                      f'{update_organization.__name__} method')
 
-        email = data.get("email")
+        email = data["email"]
 
         organization = Organization.objects.get(
             organization_uid=organization_uid,
-            email=email
+            email=email, active=True
         )
 
         organization_serializer = OrganizationSerializer(
@@ -118,11 +126,18 @@ def update_organization(organization_uid, data):
                      f'{update_organization.__name__} method')
 
         return organization_serializer.data
-    except ValidationError:
-        logger.error('Enter valid details.Organization creation failure')
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
+        logger.error('Enter valid details. Organization update failure')
         logger.error(f'Exit {__name__} module, '
                      f'{update_organization.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_organization.__name__} method')
+        raise CustomApiException(400, message)
     except Organization.DoesNotExist:
         logger.error('No such organization exist')
         logger.error(f'Exit {__name__} module, '
@@ -137,7 +152,7 @@ def update_organization_status(organization_uid, data):
         logger.debug(f'Enter {__name__} module, '
                      f'{update_organization_status.__name__} method')
 
-        email = data.get("email")
+        email = data['email']
 
         organization = Organization.objects.get(
             organization_uid=organization_uid,
@@ -154,11 +169,18 @@ def update_organization_status(organization_uid, data):
                      f'{update_organization_status.__name__} method')
 
         return organization_serializer.data
-    except ValidationError:
-        logger.error('Enter valid details.Organization status update failure')
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
+        logger.error('Enter valid details. Organization status update failure')
         logger.error(f'Exit {__name__} module, '
                      f'{update_organization_status.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_organization_status.__name__} method')
+        raise CustomApiException(400, message)
     except Organization.DoesNotExist:
         logger.error('No such organization exist')
         logger.error(f'Exit {__name__} module, '

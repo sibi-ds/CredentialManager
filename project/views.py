@@ -79,7 +79,9 @@ def get_projects(request: HttpRequest):
 
     try:
         organization_id = request.query_params.get('organization_id')
-        project_serializer = project_service.get_projects(organization_id)
+        project_serializer = project_service.get_projects(
+            organization_id, request.data
+        )
         logger.debug(f'Exit {__name__} module, get_projects method')
         return Response(project_serializer)
     except CustomApiException as e:

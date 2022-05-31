@@ -9,6 +9,7 @@ from django.db import models
 # from employee.managers import EmployeeManager
 from organization.models import Organization
 from project.models import Project
+from utils.validators import Validator
 
 
 class BaseModel(models.Model):
@@ -48,7 +49,8 @@ class Employee(BaseModel):
     employee_id = models.AutoField(primary_key=True)
     employee_uid = models.UUIDField(default=uuid.uuid4, editable=False,
                                     unique=True)
-    name = models.CharField(max_length=45, null=False)
+    name = models.CharField(max_length=70, null=False,
+                            validators=[Validator.EMPLOYEE_NAME_REGEX])
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
 
