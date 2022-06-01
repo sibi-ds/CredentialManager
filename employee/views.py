@@ -17,7 +17,6 @@ from files import file_reader
 from organization.models import Organization
 
 from utils.api_exceptions import CustomApiException
-from utils.encryption_decryption import decrypt
 
 
 logger = logging.getLogger('credential-manager-logger')
@@ -175,15 +174,6 @@ def do_employee(request: HttpRequest, employee_uid):
 #     except CustomApiException as e:
 #         logger.error(f'Exit {__name__} module, update_employee method')
 #         raise CustomApiException(e.status_code, e.detail)
-
-
-@api_view(['POST'])
-def check(request: HttpRequest):
-    password = request.data.get('password')
-    salt = request.data.get('salt')
-    salt = bytes(salt, 'utf-8')
-
-    return Response(decrypt(password, salt))
 
 
 # @csrf_exempt

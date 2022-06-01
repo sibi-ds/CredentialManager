@@ -24,6 +24,14 @@ class ItemSerializer(serializers.ModelSerializer):
                   'created_at', 'created_by', 'updated_at', 'updated_by')
         read_only_fields = ('component',)
 
+    def validate_value(self, value):
+        if not 4 <= len(value) <= 32:
+            raise CustomApiException(
+                400, 'Enter value range between 4 and 32 characters'
+            )
+
+        return value
+
 
 class ComponentSerializer(serializers.ModelSerializer):
     items = ItemSerializer(many=True)
@@ -41,6 +49,7 @@ class ComponentSerializer(serializers.ModelSerializer):
         component = Component.objects.create(**validated_data)
 
         for item in items:
+
             if item['key'] == 'password':
                 Validator.PASSWORD_REGEX(item['value'])
 
