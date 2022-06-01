@@ -254,7 +254,8 @@ def create_vault_access(organization_id, employee_uid, vault_uid, data):
 
                 vault_access = create_project_vault_access(
                     organization_id, creating_employee, project.project_id,
-                    vault.vault_id, scope)
+                    vault.vault_id, scope
+                )
         elif access_level == 'INDIVIDUAL':
             email = data['employee']
 
@@ -276,6 +277,7 @@ def create_vault_access(organization_id, employee_uid, vault_uid, data):
                     if vault_access.access_level == 'PROJECT' \
                             or vault_access.access_level == 'ORGANIZATION'\
                             or (vault_access.access_level == 'INDIVIDUAL'
+                                and vault_access.employee.email == email
                                 and vault_access.scope != scope):
                         revoke_vault_access(vault_access)
 
@@ -393,7 +395,7 @@ def create_project_vault_access(organization_id, creating_employee, project_id,
             scope=scope
         )
 
-        logger.error('Vault access creation successful')
+        logger.debug('Vault access creation successful')
         logger.debug(f'Exit {__name__} module, '
                      f'{create_project_vault_access.__name__} method')
 

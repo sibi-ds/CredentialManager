@@ -9,41 +9,40 @@ from employee.models import Employee
 from organization.models import Organization
 
 from utils.api_exceptions import CustomApiException
-from utils.encryption_decryption import decrypt
 
 
 logger = logging.getLogger('credential-manager-logger')
 
 
-def decrypt_item(data, organization_id, employee_uid, vault_uid,
-                 component_uid, item_uid):
-    """used to get decrypted value
-    """
-    logger.debug(f'Enter {__name__} module, {get_item.__name__} method')
-
-    try:
-        value = data.get('value', None)
-        salt = data.get('salt', None)
-
-        item = get_item(data, organization_id, employee_uid, vault_uid,
-                        component_uid, item_uid)
-
-        if value is None or salt is None:
-            value = item.value
-            salt = bytes(item.salt, 'utf-8')
-        else:
-            salt = bytes(salt, 'utf-8')
-
-        decrypted_value = decrypt(value, salt)
-
-        if decrypted_value is None:
-            raise CustomApiException(400, 'Decryption Failure')
-
-        return {'key': item.key, 'value': decrypted_value}
-    except CustomApiException as e:
-        logger.error('Decryption failure')
-        logger.error(f'Exit {__name__} module, {get_item.__name__} method')
-        raise CustomApiException(e.status_code, e.detail)
+# def decrypt_item(data, organization_id, employee_uid, vault_uid,
+#                  component_uid, item_uid):
+#     """used to get decrypted value
+#     """
+#     logger.debug(f'Enter {__name__} module, {get_item.__name__} method')
+#
+#     try:
+#         value = data.get('value', None)
+#         salt = data.get('salt', None)
+#
+#         item = get_item(data, organization_id, employee_uid, vault_uid,
+#                         component_uid, item_uid)
+#
+#         if value is None or salt is None:
+#             value = item.value
+#             salt = bytes(item.salt, 'utf-8')
+#         else:
+#             salt = bytes(salt, 'utf-8')
+#
+#         decrypted_value = decrypt(value, salt)
+#
+#         if decrypted_value is None:
+#             raise CustomApiException(400, 'Decryption Failure')
+#
+#         return {'key': item.key, 'value': decrypted_value}
+#     except CustomApiException as e:
+#         logger.error('Decryption failure')
+#         logger.error(f'Exit {__name__} module, {get_item.__name__} method')
+#         raise CustomApiException(e.status_code, e.detail)
 
 
 def get_item(data, organization_id, employee_uid, vault_uid, component_uid,

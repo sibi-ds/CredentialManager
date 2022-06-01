@@ -103,8 +103,9 @@ class Item(BaseModel):
     item_id = models.AutoField(primary_key=True)
     item_uid = models.UUIDField(default=uuid.uuid4, editable=False,
                                 unique=True)
-    key = models.CharField(max_length=45)
-    value = models.CharField(max_length=88)
+    key = models.CharField(max_length=45,
+                           validators=[Validator.KEY_LENGTH_REGEX])
+    value = models.CharField(max_length=88,)
     salt = models.CharField(max_length=44)
 
     component = models.ForeignKey(Component, on_delete=models.CASCADE,

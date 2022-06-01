@@ -13,8 +13,7 @@ from credential.service import component_service, item_service
 from credential.service import user_access_service
 from credential.service import vault_service
 
-from utils import encryption_decryption, encryptor
-
+from utils import encryptor
 from utils.api_exceptions import CustomApiException
 
 

@@ -7,6 +7,7 @@ from secrets import token_bytes
 from Crypto import Random
 from Crypto.Cipher import AES
 
+from utils.api_exceptions import CustomApiException
 
 logger = logging.getLogger('credential-manager-logger')
 
