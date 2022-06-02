@@ -1,6 +1,5 @@
 """This module contains serializers for all the models
 """
-from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
 from credential.models import Component
@@ -8,7 +7,11 @@ from credential.models import Item
 from credential.models import Vault
 from credential.models import VaultAccess
 
-from utils.encryption_decryption import encrypt, decrypt, generate_key
+from utils.api_exceptions import CustomApiException
+
+from utils.encryptor import encrypt
+from utils.password_matcher import is_password_valid
+from utils.validators import Validator
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -20,6 +23,14 @@ class ItemSerializer(serializers.ModelSerializer):
                   'component', 'organization',
                   'created_at', 'created_by', 'updated_at', 'updated_by')
         read_only_fields = ('component',)
+
+    def validate_value(self, value):
+        if not 4 <= len(value) <= 32:
+            raise CustomApiException(
+                400, 'Enter value range between 4 and 32 characters'
+            )
+
+        return value
 
 
 class ComponentSerializer(serializers.ModelSerializer):
@@ -38,9 +49,13 @@ class ComponentSerializer(serializers.ModelSerializer):
         component = Component.objects.create(**validated_data)
 
         for item in items:
-            salt = generate_key()
-            item['value'] = encrypt(item.get('value'), salt)
-            item['salt'] = salt.decode('utf-8')
+
+            if item['key'] == 'password':
+                Validator.PASSWORD_REGEX(item['value'])
+
+            encrypted = encrypt(item['value'])
+            item['value'] = encrypted['encoded_text']
+            item['salt'] = encrypted['texted_key']
 
             Item.objects.create(component=component, **item,
                                 created_by=component.created_by,
@@ -61,27 +76,42 @@ class ComponentSerializer(serializers.ModelSerializer):
         items = validated_data.pop('items')
 
         for item in items:
-            item_id = item.get('item_id', None)
+            item_id = item.get('item_id')
 
             if item_id:
-                component_item = Item.objects.get(item_id=item_id,
-                                                  component=instance)
+                component_item = Item.objects.get(
+                    item_id=item_id, component=instance,
+                    organization=instance.organization
+                )
+
                 component_item.key = item.get('key', component_item.key)
-                # component_item.value = item.get('value', component_item.value)
-                component_item.active = \
-                    item.get('active', component_item.active)
+
+                value = item.get('value', component_item.value)
+
+                if value != component_item.value:
+                    encrypted = encrypt(value)
+                    component_item.value = encrypted['encoded_text']
+                    component_item.salt = encrypted['texted_key']
+
+                component_item.active = item.get('active',
+                                                 component_item.active)
                 component_item.updated_by = component_item.created_by
-                component_item.organization = item \
-                    .get('organization', component_item.organization)
+                component_item.organization = item.get(
+                    'organization', component_item.organization
+                )
                 component_item.updated_by = validated_data['updated_by']
                 component_item.save()
             else:
-                salt = generate_key()
-                item['value'] = encrypt(item.get('value'), salt)
-                item['salt'] = salt.decode('utf-8')
+                if item['key'] == 'password':
+                    Validator.PASSWORD_REGEX(item['value'])
+
+                encrypted = encrypt(item['value'])
+                item['value'] = encrypted['encoded_text']
+                item['salt'] = encrypted['texted_key']
 
                 Item.objects.create(component=instance, **item,
-                                    created_by=instance.created_by)
+                                    created_by=validated_data['updated_by'],
+                                    organization=instance.organization)
 
         return instance
 

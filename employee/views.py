@@ -5,15 +5,12 @@ import logging
 from django.db import transaction
 from django.http import HttpRequest
 
-from employee.service import employee_service
-from utils.encryption_decryption import decrypt
-
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from employee.models import Employee
 from employee.serializers import EmployeeSerializer
+from employee.service import employee_service
 
 from files import file_reader
 
@@ -41,7 +38,7 @@ def create_employee(request: HttpRequest):
         raise CustomApiException(e.status_code, e.detail)
 
 
-@api_view(['POST', ])
+@api_view(['GET'])
 def create_employees(request: HttpRequest):
     """used to create employees using employees csv file
     """
@@ -90,7 +87,7 @@ def create_employees(request: HttpRequest):
         raise CustomApiException(404, 'No such organization exist')
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 @transaction.atomic
 def get_employee(request: HttpRequest):
     """used to get employee details and associated vaults using employee email
@@ -116,17 +113,10 @@ def get_employees(request: HttpRequest):
 
     try:
         organization_id = request.query_params.get('organization_id')
-
-        organization = Organization.objects.get(
-            organization_id=organization_id, active=True,
-            email=request.data.get('email')
+        employee_serializer = employee_service.get_employees(
+            organization_id, request.data
         )
-
-        employees = Employee.objects.filter(organization=organization_id)
-
-        employee_serializer = EmployeeSerializer(employees, many=True)
-
-        return Response(employee_serializer.data)
+        return Response(employee_serializer)
     except KeyError:
         logger.error('Enter valid details')
         logger.error(f'Exit {__name__} module, '
@@ -137,6 +127,37 @@ def get_employees(request: HttpRequest):
         logger.error(f'Exit {__name__} module, '
                      f'{get_employees.__name__} method')
         raise CustomApiException(404, 'No such organization exist')
+
+
+@api_view(['PUT', 'PATCH'])
+def do_employee(request: HttpRequest, employee_uid):
+    organization_id = request.query_params.get('organization_id')
+
+    if request.method == 'PUT':
+        """used to update employee details
+        """
+        try:
+            employee_serializer = employee_service.update_employee(
+                organization_id, employee_uid, request.data
+            )
+            logger.debug(f'Exit {__name__} module, do_employee method')
+            return Response(employee_serializer)
+        except CustomApiException as e:
+            logger.error(f'Exit {__name__} module, do_employee method')
+            raise CustomApiException(e.status_code, e.detail)
+
+    if request.method == 'PATCH':
+        """used to update employee status
+        """
+        try:
+            employee_serializer = employee_service.update_employee_status(
+                organization_id, employee_uid, request.data
+            )
+            logger.debug(f'Exit {__name__} module, do_employee method')
+            return Response(employee_serializer)
+        except CustomApiException as e:
+            logger.error(f'Exit {__name__} module, do_employee method')
+            raise CustomApiException(e.status_code, e.detail)
 
 
 # @api_view(['PUT'])
@@ -153,15 +174,6 @@ def get_employees(request: HttpRequest):
 #     except CustomApiException as e:
 #         logger.error(f'Exit {__name__} module, update_employee method')
 #         raise CustomApiException(e.status_code, e.detail)
-
-
-@api_view(['POST'])
-def check(request: HttpRequest):
-    password = request.data.get('password')
-    salt = request.data.get('salt')
-    salt = bytes(salt, 'utf-8')
-
-    return Response(decrypt(password, salt))
 
 
 # @csrf_exempt

@@ -1,13 +1,13 @@
+"""this module is used to call create, update and get methods on organizations
+"""
 import logging
 
 from django.http import HttpRequest
 
 from rest_framework.decorators import api_view
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from organization.models import Organization
-from organization.serializers import OrganizationSerializer
+from organization.service import organization_service
 
 from utils.api_exceptions import CustomApiException
 
@@ -17,89 +17,69 @@ logger = logging.getLogger('credential-manager-logger')
 
 @api_view(['POST'])
 def create_organization(request: HttpRequest):
+    """used to create organization
+    """
     try:
         logger.debug(f'Enter {__name__} module, create_organization method')
-
-        organization_serializer = OrganizationSerializer(data=request.data)
-        organization_serializer.is_valid(raise_exception=True)
-        organization_serializer.save()
-
-        logger.debug('Organization creation successful')
+        organization_serializer = organization_service \
+            .create_organization(request.data)
         logger.debug(f'Exit {__name__} module, create_organization method')
-
-        return Response(organization_serializer.data)
-    except ValidationError:
-        logger.error('Organization creation failure')
+        return Response(organization_serializer)
+    except CustomApiException as e:
         logger.error(f'Exit {__name__} module, create_organization method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(e.status_code, e.detail)
 
 
 @api_view(['GET'])
 def get_organizations(request: HttpRequest):
-    logger.debug(f'Enter {__name__} module, get_organizations method')
+    """used to get all organizations
+    """
+    try:
+        logger.debug(f'Enter {__name__} module, get_organizations method')
+        organization_serializer = organization_service.get_organizations()
+        logger.debug(f'Exit {__name__} module, get_organizations method')
+        return Response(organization_serializer)
+    except CustomApiException as e:
+        logger.error(f'Exit {__name__} module, get_organizations method')
+        raise CustomApiException(e.status_code, e.detail)
 
-    organizations = Organization.objects.all()
 
-    organization_serializer = OrganizationSerializer(organizations,
-                                                     many=True)
-
-    logger.debug(f'Exit {__name__} module, get_organizations method')
-
-    return Response(organization_serializer.data)
-
-
-@api_view(['GET', 'PUT'])
+@api_view(['GET', 'PUT', 'PATCH'])
 def do_organization(request: HttpRequest, organization_uid):
     logger.debug(f'Enter {__name__} module, do_organization method')
 
     if request.method == 'GET':
+        """used to get an organization details
+        """
         try:
-            email = request.data.get("email")
-
-            organization = Organization.objects.get(
-                organization_uid=organization_uid, email=email, active=True
-            )
-
-            organization_serializer = OrganizationSerializer(organization)
-
-            logger.debug('Organization fetch successful')
-
-            return Response(organization_serializer.data)
-        except Organization.DoesNotExist:
-            logger.error('No such organization exist.'
-                         'Organization creation failure')
+            organization_serializer = organization_service \
+                .get_organization(organization_uid, request.data)
+            logger.debug(f'Exit {__name__} module, do_organization method')
+            return Response(organization_serializer)
+        except CustomApiException as e:
             logger.error(f'Exit {__name__} module, do_organization method')
-            raise CustomApiException(400, 'Enter valid credentials')
-        except ValidationError:
-            logger.error('Enter valid details.Organization creation failure')
-            logger.error(f'Exit {__name__} module, do_organization method')
-            raise CustomApiException(400, 'Enter valid details')
+            raise CustomApiException(e.status_code, e.detail)
 
     if request.method == 'PUT':
+        """used to update organization details
+        """
         try:
-            email = request.data.get("email")
-
-            organization = Organization.objects.get(
-                organization_uid=organization_uid,
-                email=email
-            )
-
-            organization_serializer = OrganizationSerializer(
-                instance=organization, data=request.data, partial=True
-            )
-
-            organization_serializer.is_valid(raise_exception=True)
-            organization_serializer.save()
-
-            logger.debug('Organization update successful')
-
-            return Response(organization_serializer.data)
-        except ValidationError:
-            logger.error('Enter valid details.Organization creation failure')
+            organization_serializer = organization_service \
+                .update_organization(organization_uid, request.data)
+            logger.debug(f'Exit {__name__} module, do_organization method')
+            return Response(organization_serializer)
+        except CustomApiException as e:
             logger.error(f'Exit {__name__} module, do_organization method')
-            raise CustomApiException(400, 'Enter valid details')
-        except Organization.DoesNotExist:
-            logger.error('No such organization exist.'
-                         'Organization creation failure')
+            raise CustomApiException(e.status_code, e.detail)
+
+    if request.method == 'PATCH':
+        """used to update organization status
+        """
+        try:
+            organization_serializer = organization_service \
+                .update_organization_status(organization_uid, request.data)
+            logger.debug(f'Exit {__name__} module, do_organization method')
+            return Response(organization_serializer)
+        except CustomApiException as e:
             logger.error(f'Exit {__name__} module, do_organization method')
-            raise CustomApiException(400, 'No such organization exist')
+            raise CustomApiException(e.status_code, e.detail)

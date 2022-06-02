@@ -6,8 +6,10 @@ from rest_framework.exceptions import ValidationError
 
 from credential.models import VaultAccess
 from credential.serializers import VaultResponseSerializer
+
 from employee.models import Employee
-from employee.serializers import EmployeeSerializer, EmployeeResponseSerializer
+from employee.serializers import EmployeeResponseSerializer
+from employee.serializers import EmployeeSerializer
 
 from organization.models import Organization
 
@@ -40,11 +42,18 @@ def create_employee(organization_id, data):
                      f'{create_employee.__name__} method')
 
         return employee_serializer.data
-    except (ValidationError, KeyError):
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Enter valid details. Employee creation failure')
         logger.error(f'Exit {__name__} module, '
                      f'{create_employee.__name__} method')
-        raise CustomApiException(500, 'Enter valid details')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{create_employee.__name__} method')
+        raise CustomApiException(400, message)
     except Organization.DoesNotExist:
         logger.error('Organization not exist. Employee creation failure')
         logger.error(f'Exit {__name__} module, '
@@ -59,7 +68,7 @@ def get_employee(organization_id, data):
         logger.debug(f'Enter {__name__} module, '
                      f'{get_employee.__name__} method')
 
-        email = data.get("email")
+        email = data["email"]
 
         organization = Organization.objects.get(
             organization_id=organization_id,
@@ -68,7 +77,7 @@ def get_employee(organization_id, data):
 
         employee = Employee.objects.get(
             email=email, active=True,
-            organization=organization.organization_id,
+            organization=organization,
             organization__active=True
         )
 
@@ -130,15 +139,17 @@ def get_employee(organization_id, data):
         logger.debug(f'Exit {__name__} module, {get_employee.__name__} method')
 
         return response_employee
-    except ValidationError:
-        logger.error('Load valid details in the file. '
-                     'Employees creation failure')
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
+        logger.error('Employees fetch failure')
         logger.error(f'Exit {__name__} module, {get_employee.__name__} method')
-        raise CustomApiException(500, 'Load valid details in the file')
-    except KeyError:
-        logger.error('Enter valid details. Employees creation failure')
-        logger.error(f'Exit {__name__} module, {get_employee.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(500, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_employee.__name__} method')
+        raise CustomApiException(400, message)
     except Organization.DoesNotExist:
         logger.error('Organization not exist')
         logger.error(f'Exit {__name__} module, {get_employee.__name__} method')
@@ -147,3 +158,151 @@ def get_employee(organization_id, data):
         logger.error('Employee not exist')
         logger.error(f'Exit {__name__} module, {get_employee.__name__} method')
         raise CustomApiException(404, 'No such employee exist')
+
+
+def get_employees(organization_id, data):
+    """used to get all projects from an organization
+    """
+    try:
+        logger.debug(f'Enter {__name__} module, '
+                     f'{get_employees.__name__} method')
+
+        email = data['email']
+
+        organization = Organization.objects.get(
+            organization_id=organization_id, active=True, email=email
+        )
+
+        employees = Employee.objects.filter(organization=organization,
+                                            active=True)
+
+        employee_serializer = EmployeeSerializer(employees, many=True)
+
+        logger.debug(f'Exit {__name__} module, '
+                     f'{get_employees.__name__} method')
+
+        return employee_serializer.data
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
+        logger.error('Enter valid details')
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_employees.__name__} method')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_employees.__name__} method')
+        raise CustomApiException(400, message)
+    except Organization.DoesNotExist:
+        logger.error('Organization not exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_employees.__name__} method')
+        raise CustomApiException(404, 'No such organization exist')
+
+
+def update_employee_status(organization_id, employee_uid, data):
+    """used to update employee status
+    """
+    try:
+        logger.debug(f'Enter {__name__} module, '
+                     f'{update_employee_status.__name__} method')
+
+        email = data.get("email")
+
+        organization = Organization.objects.get(
+            organization_id=organization_id,
+            active=True
+        )
+
+        employee = Employee.objects.get(
+            employee_uid=employee_uid,
+            organization=organization
+        )
+
+        employee.active = not employee.active
+        employee.save()
+
+        employee_serializer = EmployeeSerializer(employee)
+
+        logger.debug('Employee status updated successful')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{update_employee_status.__name__} method')
+
+        return employee_serializer.data
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
+        logger.error('Enter valid details.Employee status update failure')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_employee_status.__name__} method')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_employee_status.__name__} method')
+        raise CustomApiException(400, message)
+    except Organization.DoesNotExist:
+        logger.error('No such organization exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_employee_status.__name__} method')
+        raise CustomApiException(400, 'No such organization exist')
+    except Employee.DoesNotExist:
+        logger.error('No such employee exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_employee_status.__name__} method')
+        raise CustomApiException(400, 'No such employee exist')
+
+
+def update_employee(organization_id, employee_uid, data):
+    """used to update employee status
+    """
+    try:
+        logger.debug(f'Enter {__name__} module, '
+                     f'{update_employee.__name__} method')
+
+        email = data["email"]
+
+        organization = Organization.objects.get(
+            organization_id=organization_id,
+            active=True
+        )
+
+        employee = Employee.objects.get(
+            employee_uid=employee_uid,
+            organization=organization,
+            active=True
+        )
+
+        employee_serializer = EmployeeSerializer(employee, data=data,
+                                                 partial=True)
+        employee_serializer.is_valid(raise_exception=True)
+        employee_serializer.save()
+
+        logger.debug('Employee details updated successfully')
+        logger.debug(f'Exit {__name__} module, '
+                     f'{update_employee.__name__} method')
+
+        return employee_serializer.data
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
+        logger.error('Enter valid details. Employee update failure')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_employee.__name__} method')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_employee.__name__} method')
+        raise CustomApiException(400, message)
+    except Organization.DoesNotExist:
+        logger.error('No such organization exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_employee.__name__} method')
+        raise CustomApiException(400, 'No such organization exist')
+    except Employee.DoesNotExist:
+        logger.error('No such employee exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_employee.__name__} method')
+        raise CustomApiException(400, 'No such employee exist')

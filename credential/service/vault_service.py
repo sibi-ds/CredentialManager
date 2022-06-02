@@ -15,6 +15,7 @@ from credential.service import user_access_service
 from employee.models import Employee
 
 from organization.models import Organization
+
 from project.models import Project
 
 from utils.api_exceptions import CustomApiException
@@ -24,7 +25,7 @@ logger = logging.getLogger('credential-manager-logger')
 
 
 @transaction.atomic
-def create_vault(organization_id, uid, data):
+def create_vault(organization_id, employee_uid, data):
     """used to create vault in an organization
     """
     logger.debug(f'Enter {__name__} module, {create_vault.__name__} method')
@@ -35,7 +36,7 @@ def create_vault(organization_id, uid, data):
         )
 
         employee = Employee.objects.get(
-            employee_uid=uid, active=True,
+            employee_uid=employee_uid, active=True,
             organization=organization,
             organization__active=True
         )
@@ -59,20 +60,13 @@ def create_vault(organization_id, uid, data):
             )
 
             vault_access_data['project'] = project.project_id
-        elif access_level == 'INDIVIDUAL':
-            accessing_employee = Employee.objects.get(
-                email=data.pop('employee'), active=True,
-                organization=organization
-            )
-
-            vault_access_data['employee'] = accessing_employee.employee_id
 
         vault_serializer = VaultSerializer(data=data)
         vault_serializer.is_valid(raise_exception=True)
         vault_serializer.save()
         logger.debug('Vault creation successful')
 
-        if access_level is not None:
+        if access_level == 'PROJECT' or access_level == 'ORGANIZATION':
             vault_access_data['vault'] = vault_serializer.data['vault_id']
             vault_access_serializer = VaultAccessSerializer(
                 data=vault_access_data
@@ -84,10 +78,17 @@ def create_vault(organization_id, uid, data):
         logger.debug(f'Exit {__name__} module, {create_vault.__name__} method')
 
         return vault_serializer.data
-    except (ValidationError, KeyError):
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Vault creation failure. Enter valid details')
         logger.error(f'Exit {__name__} module, {create_vault.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{create_vault.__name__} method')
+        raise CustomApiException(400, message)
     except Employee.DoesNotExist:
         logger.error('Vault creation failure. No such employee exist')
         logger.error(f'Exit {__name__} module, {create_vault.__name__} method')
@@ -110,12 +111,13 @@ def get_vaults(organization_id, data):
     try:
         organization = Organization.objects.get(
             organization_id=organization_id, active=True,
-            email=data.get('email')
+            email=data['email']
         )
 
         vaults = Vault.objects.filter(
             organization=organization.organization_id,
-            organization__active=True
+            organization__active=True,
+            active=True
         )
 
         vault_serializer = VaultOnlySerializer(vaults, many=True)
@@ -123,17 +125,19 @@ def get_vaults(organization_id, data):
         logger.debug(f'Exit {__name__} module, {get_vaults.__name__} method')
 
         return vault_serializer.data
-    except KeyError:
-        logger.error('Enter valid details')
-        logger.error(f'Exit {__name__} module, {get_vaults.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_vaults.__name__} method')
+        raise CustomApiException(400, message)
     except Organization.DoesNotExist:
         logger.error('No such organization exist')
         logger.error(f'Exit {__name__} module, {get_vaults.__name__} method')
         raise CustomApiException(404, 'No such organization exist')
 
 
-def get_vault(organization_id, uid, vault_uid):
+def get_vault(organization_id, employee_uid, vault_uid):
     """used to get vault from an organization
     """
     logger.debug(f'Enter {__name__} module, {get_vault.__name__} method')
@@ -149,7 +153,7 @@ def get_vault(organization_id, uid, vault_uid):
         )
 
         employee = Employee.objects.get(
-            employee_uid=uid, active=True,
+            employee_uid=employee_uid, active=True,
             organization=organization,
         )
 
@@ -159,23 +163,26 @@ def get_vault(organization_id, uid, vault_uid):
                                                         vault.vault_id):
             vault_serializer = VaultSerializer(vault)
             logger.debug(f'Exit {__name__} module, '
-                        f'{get_vault.__name__} method')
+                         f'{get_vault.__name__} method')
             return vault_serializer.data
         else:
             logger.error(f'Exit {__name__} module, '
                          f'{get_vault.__name__} method')
             raise CustomApiException(400, 'You don\'t have access '
                                           'to this vault')
-    except KeyError:
-        logger.error('Enter valid details')
-        logger.error(f'Exit {__name__} module, {get_vault.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{get_vault.__name__} method')
+        raise CustomApiException(400, message)
     except Vault.DoesNotExist:
         logger.error(f'vault for Vault UID : {vault_uid} is not exist')
         logger.error(f'Exit {__name__} module, {get_vault.__name__} method')
         raise CustomApiException(404, 'No such vault exist')
     except Employee.DoesNotExist:
-        logger.error(f'Employee for Employee UID : {uid} is not exist')
+        logger.error(f'Employee for Employee UID : '
+                     f'{employee_uid} is not exist')
         logger.error(f'Exit {__name__} module, {get_vault.__name__} method')
         raise CustomApiException(404, 'No such employee exist')
     except Organization.DoesNotExist:
@@ -188,7 +195,7 @@ def get_vault(organization_id, uid, vault_uid):
         raise CustomApiException(e.status_code, e.detail)
 
 
-def update_vault(organization_id, uid, vault_uid, data):
+def update_vault(organization_id, employee_uid, vault_uid, data):
     """used to update vault details
     """
     logger.debug(f'Enter {__name__} module, {update_vault.__name__} method')
@@ -200,11 +207,12 @@ def update_vault(organization_id, uid, vault_uid, data):
 
         vault = Vault.objects.get(
             vault_uid=vault_uid,
-            organization=organization
+            organization=organization,
+            active=True
         )
 
         employee = Employee.objects.get(
-            employee_uid=uid, active=True,
+            employee_uid=employee_uid, active=True,
             organization=organization,
         )
 
@@ -231,10 +239,17 @@ def update_vault(organization_id, uid, vault_uid, data):
                          f'{update_vault.__name__} method')
             raise CustomApiException(400,
                                      'You don\'t have vault update access')
-    except (ValidationError, KeyError):
+    except ValidationError as ve:
+        message = list(ve.get_full_details().values())[0][0]['message']
         logger.error('Valid details not provided')
         logger.error(f'Exit {__name__} module, {update_vault.__name__} method')
-        raise CustomApiException(400, 'Enter valid details')
+        raise CustomApiException(400, message)
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_vault.__name__} method')
+        raise CustomApiException(400, message)
     except Vault.DoesNotExist:
         logger.error(f'Vault for Vault UID : {vault_uid} is not exist')
         logger.error(f'Exit {__name__} module, {update_vault.__name__} method')
@@ -244,6 +259,67 @@ def update_vault(organization_id, uid, vault_uid, data):
         logger.error(f'Exit {__name__} module, {update_vault.__name__} method')
         raise CustomApiException(404, 'No such organization exist')
     except Employee.DoesNotExist:
-        logger.error(f'vault for Employee UID : {uid} is not exist')
+        logger.error(f'vault for Employee UID : {employee_uid} is not exist')
         logger.error(f'Exit {__name__} module, {update_vault.__name__} method')
         raise CustomApiException(404, 'No such employee exist')
+
+
+def update_vault_status(organization_id, employee_uid, vault_uid, data):
+    """used to update active status
+    """
+    logger.debug(f'Enter {__name__} module, '
+                 f'{update_vault_status.__name__} method')
+
+    try:
+        organization = Organization.objects.get(
+            organization_id=organization_id, active=True
+        )
+
+        vault = Vault.objects.get(
+            vault_uid=vault_uid,
+            organization=organization,
+        )
+
+        employee = Employee.objects.get(
+            employee_uid=employee_uid, active=True,
+            organization=organization,
+        )
+
+        if vault.created_by.employee_id == employee.employee_id:
+            vault.active = not vault.active
+            vault.save()
+            vault_serializer = VaultOnlySerializer(vault)
+            logger.debug(f'Exit {__name__} module, '
+                         f'{update_vault_status.__name__} method')
+            return vault_serializer.data
+        else:
+            logger.error(f'Exit {__name__} module, '
+                         f'{update_vault_status.__name__} method')
+            raise CustomApiException(400, 'Only vault owner can update status')
+    except KeyError as ke:
+        message = ke.args[0] + ' is missing'
+        logger.error(message)
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_vault_status.__name__} method')
+        raise CustomApiException(400, message)
+    except Vault.DoesNotExist:
+        logger.error(f'vault for Vault UID : {vault_uid} is not exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_vault_status.__name__} method')
+        raise CustomApiException(404, 'No such vault exist')
+    except Employee.DoesNotExist:
+        logger.error(f'Employee for Employee UID : '
+                     f'{employee_uid} is not exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_vault_status.__name__} method')
+        raise CustomApiException(404, 'No such employee exist')
+    except Organization.DoesNotExist:
+        logger.error('No such organization exist')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_vault_status.__name__} method')
+        raise CustomApiException(404, 'No such organization exist')
+    except CustomApiException as e:
+        logger.error('Enter valid credentials')
+        logger.error(f'Exit {__name__} module, '
+                     f'{update_vault_status.__name__} method')
+        raise CustomApiException(e.status_code, e.detail)

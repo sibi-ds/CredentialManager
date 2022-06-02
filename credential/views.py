@@ -12,8 +12,8 @@ from rest_framework.response import Response
 from credential.service import component_service, item_service
 from credential.service import user_access_service
 from credential.service import vault_service
-from utils import encryption_decryption
 
+from utils import encryptor
 from utils.api_exceptions import CustomApiException
 
 
@@ -49,7 +49,7 @@ def get_vaults(request: HttpRequest):
         raise CustomApiException(e.status_code, e.detail)
 
 
-@api_view(['GET', 'PUT'])
+@api_view(['GET', 'PUT', 'PATCH'])
 def do_vault(request: HttpRequest, employee_uid, vault_uid):
     logger.debug(f'Enter {__name__} module, do_vault method')
 
@@ -75,6 +75,19 @@ def do_vault(request: HttpRequest, employee_uid, vault_uid):
             logger.error(f'Exit {__name__} module, do_vault method')
             raise CustomApiException(e.status_code, e.detail)
 
+    if request.method == 'PATCH':
+        """used to update vault status
+        """
+        try:
+            vault_serializer = vault_service.update_vault_status(
+                organization_id, employee_uid, vault_uid, request.data
+            )
+            logger.debug(f'Exit {__name__} module, do_vault method')
+            return Response(vault_serializer)
+        except CustomApiException as e:
+            logger.error(f'Exit {__name__} module, do_vault method')
+            raise CustomApiException(e.status_code, e.detail)
+
 
 @api_view(['POST'])
 def create_component(request: HttpRequest, employee_uid, vault_uid):
@@ -93,7 +106,7 @@ def create_component(request: HttpRequest, employee_uid, vault_uid):
         raise CustomApiException(e.status_code, e.detail)
 
 
-@api_view(['GET', 'PUT'])
+@api_view(['GET', 'PUT', 'PATCH'])
 def do_component(request: HttpRequest, employee_uid, vault_uid, component_uid):
     logger.debug(f'Enter {__name__} module, do_component method')
 
@@ -121,6 +134,20 @@ def do_component(request: HttpRequest, employee_uid, vault_uid, component_uid):
                                                            request.data)
             logger.debug(f'Exit {__name__} module, do_component method')
             return Response(component)
+        except CustomApiException as e:
+            logger.error(f'Exit {__name__} module, do_component method')
+            raise CustomApiException(e.status_code, e.detail)
+
+    if request.method == 'PATCH':
+        """used to update component status
+        """
+        try:
+            component_serializer = component_service.update_component_status(
+                organization_id, employee_uid,
+                vault_uid, component_uid, request.data
+            )
+            logger.debug(f'Exit {__name__} module, do_component method')
+            return Response(component_serializer)
         except CustomApiException as e:
             logger.error(f'Exit {__name__} module, do_component method')
             raise CustomApiException(e.status_code, e.detail)
@@ -196,8 +223,7 @@ def decrypt(request: HttpRequest):
             return render(request, 'decrypt.html',
                           {'error': 'Enter both token and secret key'})
 
-        secret_key = bytes(secret_key, 'utf-8')
-        decrypted_value = encryption_decryption.decrypt(token, secret_key)
+        decrypted_value = encryptor.decrypt(token, secret_key)
 
         if decrypted_value is None:
             return render(request, 'decrypt.html',
