@@ -4,6 +4,7 @@ import logging
 
 from django.db import transaction
 from django.http import HttpRequest
+from oauth2_provider.models import AccessToken
 
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
@@ -160,102 +161,6 @@ def do_employee(request: HttpRequest, employee_uid):
             raise CustomApiException(e.status_code, e.detail)
 
 
-# @api_view(['PUT'])
-# def update_employee(request: HttpRequest, uid):
-#     """used to update employee details
-#     """
-#     try:
-#         logger.debug(f'Enter {__name__} module, update_employee method')
-#         organization_id = request.query_params.get('organization_id')
-#         employee = employee_service.update_employee(organization_id,
-#                                                     request.data)
-#         logger.debug(f'Exit {__name__} module, update_employee method')
-#         return Response(employee)
-#     except CustomApiException as e:
-#         logger.error(f'Exit {__name__} module, update_employee method')
-#         raise CustomApiException(e.status_code, e.detail)
-
-
-# @csrf_exempt
-# @api_view(["POST"])
-# @permission_classes((AllowAny,))
-# def create_employee(request):
-#     """used to create employee
-#     """
-#     logger.info(f'Enter {__name__} module, create_employee method')
-#     name = request.data.get("name")
-#     email = request.data.get("email")
-#     password = request.data.get("password")
-#
-#     if email is None or password is None or name is None:
-#         logger.error('Employee creation failed')
-#         raise CustomApiException(400,
-#                                  'Please provide name, email and password')
-#
-#     employee = EmployeeAccount.objects.create_user(email, password, name)
-#     employee_serializer = EmployeeAccountSerializer(employee)
-#     logger.info(f'Exit {__name__} module, create_employee method')
-#
-#     return Response(employee_serializer.data)
-
-
-# @csrf_exempt
-# @api_view(["POST"])
-# @permission_classes((AllowAny,))
-# def login(request):
-#     username = request.data.get("email")
-#     password = request.data.get("password")
-#     if username is None or password is None:
-#         return Response({'error': 'Please provide both username and password'},
-#                         status=HTTP_400_BAD_REQUEST)
-#     user = authenticate(username=username, password=password)
-#
-#     if not user:
-#         return Response({'error': 'Invalid Credentials'},
-#                         status=HTTP_404_NOT_FOUND)
-#
-#     token, _ = Token.objects.get_or_create(user=user)
-#
-#     seconds = request.data.get("seconds")
-#
-#     if is_token_expired(token, seconds):
-#         token.delete()
-#
-#     token, _ = Token.objects.get_or_create(user=user)
-#
-#     return Response({'token': token.key, 'expires_in': expiring_in(token,
-#                                                                    seconds)},
-#                     status=HTTP_200_OK)
-
-
-# def expiring_in(token, seconds):
-#     """used to calculate the valid time left for a token
-#     """
-#     time_elapsed = timezone.now() - token.created
-#     left_time = timedelta(seconds=seconds) - time_elapsed
-#     return left_time
-
-
-# def is_token_expired(token, seconds):
-#     """used to determine whether a token is expired or not
-#     """
-#     return expiring_in(token, seconds) < timedelta(seconds=0)
-
-
-# @csrf_exempt
-# @api_view(["GET"])
-# @permission_classes((IsAuthenticated,))
-# def sample(request):
-#     data = {'sample_data': 123}
-#     return Response(data, status=HTTP_200_OK)
-
-
-# if token is expired new token will be established
-# If token is expired then it will be removed
-# and new one with different key will be created
-# def token_expire_handler(token, seconds):
-#     is_expired = is_token_expired(token, seconds)
-#     if is_expired:
-#         token.delete()
-#         token = Token.objects.create(user=token.user)
-#     return is_expired, token
+@api_view(["GET"])
+def sample(request: HttpRequest):
+    return Response(request.user.id)
