@@ -12,3 +12,4 @@ organization/service/__pycache__/
 project/__pycache__/
 project/service/__pycache__/
 utils/__pycache__/
+env/
