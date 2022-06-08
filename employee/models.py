@@ -1,14 +1,13 @@
 """this module contains employee models
 """
-# from django.contrib.auth.base_user import AbstractBaseUser
-# from django.contrib.auth.models import PermissionsMixin
 import uuid
 
 from django.db import models
 
-# from employee.managers import EmployeeManager
 from organization.models import Organization
+
 from project.models import Project
+
 from utils.validators import Validator
 
 
@@ -20,25 +19,6 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
-
-
-# class EmployeeAccount(AbstractBaseUser, PermissionsMixin, BaseModel):
-#     """model to define employee details
-#     which is used as the django auth user model
-#     """
-#     employee_id = models.AutoField(primary_key=True)
-#     name = models.CharField(max_length=45)
-#     email = models.EmailField(unique=True)
-#     is_staff = models.BooleanField(default=True)
-#     is_active = models.BooleanField(default=True)
-#     projects = models.ManyToManyField(Project,
-#                                       related_name='employees',
-#                                       blank=True)
-#
-#     USERNAME_FIELD = 'email'
-#     REQUIRED_FIELDS = ['name']
-#
-#     objects = EmployeeManager()
 
 
 class Employee(BaseModel):

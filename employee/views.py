@@ -4,7 +4,6 @@ import logging
 
 from django.db import transaction
 from django.http import HttpRequest
-from oauth2_provider.models import AccessToken
 
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
@@ -161,6 +160,6 @@ def do_employee(request: HttpRequest, employee_uid):
             raise CustomApiException(e.status_code, e.detail)
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 def sample(request: HttpRequest):
-    return Response(request.user.id)
+    pass

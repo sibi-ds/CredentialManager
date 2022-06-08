@@ -13,6 +13,8 @@ import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+from oauth2_provider.settings import oauth2_settings
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
@@ -29,9 +31,11 @@ ALLOWED_HOSTS = []
 
 # Application definition
 INSTALLED_APPS = [
+    'client.apps.ClientConfig',
     'organization.apps.OrganizationConfig',
     'project.apps.ProjectConfig',
     'employee.apps.EmployeeConfig',
+    'user.apps.UserConfig',
     'credential.apps.CredentialConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -145,7 +149,7 @@ REST_FRAMEWORK = {
     ),
 
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     )
 }
 
@@ -185,4 +189,5 @@ LOGGING = {
 }
 
 # custom auth user model
-# AUTH_USER_MODEL = 'employee.EmployeeAccount'
+AUTH_USER_MODEL = 'user.User'
+oauth2_settings.APPLICATION_MODEL = 'client.Client'

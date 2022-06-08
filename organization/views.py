@@ -35,6 +35,7 @@ def get_organizations(request: HttpRequest):
     """used to get all organizations
     """
     try:
+        print(request.user)
         logger.debug(f'Enter {__name__} module, get_organizations method')
         organization_serializer = organization_service.get_organizations()
         logger.debug(f'Exit {__name__} module, get_organizations method')
