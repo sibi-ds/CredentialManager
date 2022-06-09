@@ -22,7 +22,7 @@ def create_client(data):
         client = Client.objects.create(**data)
         client_serializer = ClientSerializer(client)
 
-        logger.debug('Organization creation successful')
+        logger.debug('Client creation successful')
         logger.debug(f'Exit {__name__} module, '
                      f'{create_client.__name__} method')
 

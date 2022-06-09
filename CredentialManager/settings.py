@@ -188,6 +188,5 @@ LOGGING = {
     }
 }
 
-# custom auth user model
+# OAUTH2_PROVIDER_APPLICATION_MODEL = 'client.Client'
 AUTH_USER_MODEL = 'user.User'
-oauth2_settings.APPLICATION_MODEL = 'client.Client'

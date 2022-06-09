@@ -40,13 +40,13 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     is_staff = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
 
-    # user_types = [
-    #     ("SUPER_USER", "SUPER_USER"),
-    #     ("CLIENT", "CLIENT"),
-    #     ("EMPLOYEE", "EMPLOYEE"),
-    # ]
-    #
-    # access_level = models.CharField(choices=user_types, max_length=20)
+    user_types = [
+        ("SUPER_USER", "SUPER_USER"),
+        ("CLIENT", "CLIENT"),
+        ("EMPLOYEE", "EMPLOYEE"),
+    ]
+
+    access_level = models.CharField(choices=user_types, max_length=20)
 
     organization = models.ForeignKey(Organization, to_field='organization_id',
                                      related_name='organization_employees',
