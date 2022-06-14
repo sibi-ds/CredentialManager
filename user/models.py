@@ -3,7 +3,9 @@ import uuid
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
+from oauth2_provider.models import Application
 
+from client.models import Client
 from organization.models import Organization
 
 from project.models import Project
@@ -33,8 +35,7 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     user_id = models.AutoField(primary_key=True)
     user_uid = models.UUIDField(default=uuid.uuid4, editable=False,
                                 unique=True)
-    name = models.CharField(max_length=70, null=False,
-                            validators=[Validator.EMPLOYEE_NAME_REGEX])
+    name = models.CharField(max_length=70, null=False)
     email = models.EmailField(unique=True)
     is_admin = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=True)
@@ -46,26 +47,21 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         ("EMPLOYEE", "EMPLOYEE"),
     ]
 
-    access_level = models.CharField(choices=user_types, max_length=20)
+    user_type = models.CharField(choices=user_types, max_length=20, null=False)
 
-    organization = models.ForeignKey(Organization, to_field='organization_id',
-                                     related_name='organization_employees',
-                                     db_column='organization_id',
-                                     on_delete=models.CASCADE,
-                                     null=True)
+    application = models.ForeignKey(Application, to_field='id',
+                                    related_name='client_users',
+                                    on_delete=models.CASCADE,
+                                    null=True)
 
     projects = models.ManyToManyField(Project,
                                       related_name='mapped_employees',
                                       blank=True)
 
-    created_by = models.ForeignKey(Organization, to_field='organization_id',
+    created_by = models.ForeignKey('user.User', on_delete=models.CASCADE,
                                    db_column='created_by',
-                                   related_name='created_organization_employees',
-                                   on_delete=models.CASCADE,
+                                   related_name='created_users',
                                    null=True)
-
-    # last_login = None
-    # is_active = None
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name', ]

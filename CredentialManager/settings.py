@@ -188,5 +188,6 @@ LOGGING = {
     }
 }
 
-# OAUTH2_PROVIDER_APPLICATION_MODEL = 'client.Client'
+OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
+
 AUTH_USER_MODEL = 'user.User'

@@ -10,8 +10,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['user_id', 'name', 'email', 'active', 'password',
-                  'created_at', 'created_by', 'updated_at', 'updated_by', ]
+        fields = '__all__'
 
     # override create method for hashing password of an employee
     def create(self, validated_data):
