@@ -26,8 +26,11 @@ list field in **settings.py** file
 - credential
 
 ### setup:
+- Install python 3.9 in the machine
 - Git clone the main branch from the remote repository into the local repository
 - Create a separate environment for the project parallel to the project location
+- pip install virtualenv to install virtual environment package
+- to create virtual environment use python -m venv {environment-name}
 - Activate the environment using {environment-name}\scripts\activate command in any Command Line Interface
 - Install all the necessary packages for the project as mentioned in the requirement.txt file which is placed in the project base directory
 - Use the following command to install the packages : pip install -r requirement.txt

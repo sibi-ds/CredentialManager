@@ -41,8 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    # 'rest_framework.authtoken',
-    'rest_framework_simplejwt'
 ]
 
 MIDDLEWARE = [
@@ -81,11 +79,12 @@ WSGI_APPLICATION = 'CredentialManager.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'credential_manager',
-        'USER': 'postgres',
+        'USER': 'root',
         'PASSWORD': 'root',
         'HOST': 'localhost',
+        'PORT': '3306'
     }
 }
 
@@ -134,13 +133,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'utils.api_exceptions.custom_exception_handler',
-
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
-    ),
 }
 
 # logging configurations
@@ -177,12 +169,3 @@ LOGGING = {
         }
     }
 }
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'AUTH_HEADER_TYPES': ('Bearer',),
-}
-
-# custom auth user model
-# AUTH_USER_MODEL = 'employee.EmployeeAccount'
